@@ -1,0 +1,1189 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>ExBot! Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+/* Layout: instrument-panel shell. A quiet left rail of controls beside one working canvas; on phones the rail becomes a bottom tab bar. */
+:root{
+  --bg:#F2F5F4; --surface:#FFFFFF; --surface-2:#EAF0EE; --ink:#13201E; --muted:#5A6B67; --line:#D6E0DD;
+  --accent:#1F6F63; --accent-ink:#FFFFFF; --accent-soft:#D9EEE8; --rec:#BFE2D8;
+  --gain:#1D8456; --loss:#C2453A; --warn:#A86A12; --info:#2D5DA8;
+  --gain-soft:#DDF2E7; --loss-soft:#F8E1DE; --warn-soft:#F6EAD3; --info-soft:#E0E8F6;
+  --danger-ink:#FFFFFF; --track:#D6E0DD;
+  --c1:#1F6F63; --c2:#2D5DA8; --c3:#A86A12; --c4:#7A4FA0; --c5:#5A6B67; --c6:#B5487A;
+  --shadow:0 1px 2px rgba(19,32,30,.06),0 10px 30px rgba(19,32,30,.08);
+  --f-display:"Libre Franklin","Noto Sans SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-body:"IBM Plex Sans","Noto Sans SC",system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D1413; --surface:#141E1C; --surface-2:#1A2725; --ink:#E4EDEA; --muted:#92A49F; --line:#253430;
+  --accent:#53B5A2; --accent-ink:#04211B; --accent-soft:#17382F; --rec:#24574B;
+  --gain:#4FC38B; --loss:#EF7B6F; --warn:#E2A64B; --info:#81A8EA;
+  --gain-soft:#163226; --loss-soft:#3A1E1B; --warn-soft:#3A2D16; --info-soft:#1B2A44;
+  --danger-ink:#2A0B07; --track:#2A3A36;
+  --c1:#53B5A2; --c2:#81A8EA; --c3:#E2A64B; --c4:#B58BE0; --c5:#92A49F; --c6:#E28AB2;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 30px rgba(0,0,0,.3); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0D1413; --surface:#141E1C; --surface-2:#1A2725; --ink:#E4EDEA; --muted:#92A49F; --line:#253430;
+  --accent:#53B5A2; --accent-ink:#04211B; --accent-soft:#17382F; --rec:#24574B;
+  --gain:#4FC38B; --loss:#EF7B6F; --warn:#E2A64B; --info:#81A8EA;
+  --gain-soft:#163226; --loss-soft:#3A1E1B; --warn-soft:#3A2D16; --info-soft:#1B2A44;
+  --danger-ink:#2A0B07; --track:#2A3A36;
+  --c1:#53B5A2; --c2:#81A8EA; --c3:#E2A64B; --c4:#B58BE0; --c5:#92A49F; --c6:#E28AB2;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 30px rgba(0,0,0,.3); color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:var(--accent)}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.2;letter-spacing:-.01em}
+h1{font-size:26px} h2{font-size:18px} h3{font-size:15px}
+p{margin:0}
+.muted{color:var(--muted)} .small{font-size:12.5px} .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.ic{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ic.lg{width:22px;height:22px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* shell */
+.shell{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100%}
+.rail{position:sticky;top:0;align-self:start;height:100vh;display:flex;flex-direction:column;gap:18px;padding:20px 14px;border-right:1px solid var(--line);background:var(--surface);overflow:auto}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);padding:0 8px}
+.brand b{font-family:var(--f-display);font-size:20px;letter-spacing:-.02em}
+.navlist{display:flex;flex-direction:column;gap:2px}
+.navlist a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;color:var(--muted);text-decoration:none;font-weight:500}
+.navlist a:hover{background:var(--surface-2);color:var(--ink)}
+.navlist a[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
+.navlist .sep{height:1px;background:var(--line);margin:8px 6px}
+.navlist .grp{font-size:11.5px;color:var(--muted);letter-spacing:.06em;padding:6px 10px 2px}
+.rail-foot{margin-top:auto;display:flex;flex-direction:column;gap:10px;font-size:12.5px}
+.inst{border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:4px;background:var(--bg)}
+.main{min-width:0;padding-inline:clamp(16px,3vw,36px);padding-block:22px 40px}
+.foot{margin-top:36px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+.tabbar{display:none;position:fixed;left:0;right:0;bottom:0;z-index:30;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabbar a,.tabbar button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px 9px;font-size:11px;color:var(--muted);text-decoration:none;background:none;border:0;font-family:inherit;cursor:pointer}
+.tabbar [aria-current="page"]{color:var(--accent)}
+.shell.public{grid-template-columns:1fr}
+.shell.public .rail{display:none}
+.shell.public ~ .tabbar{display:none!important}
+@media (max-width:880px){
+  .shell{grid-template-columns:1fr}
+  .rail{display:none}
+  .tabbar{display:grid}
+  .main{padding-bottom:96px}
+}
+
+/* top bar */
+.top{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end;justify-content:space-between;margin-bottom:20px}
+.top .t{display:flex;flex-direction:column;gap:4px;min-width:0}
+.top .r{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+/* primitives */
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.grid{display:grid;gap:16px}
+.cols-2{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+.cols-3{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
+.cols-4{grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;min-width:0}
+.card.flat{background:var(--bg)}
+.card-h{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 9px;border-radius:999px;font-size:12px;line-height:20px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.pill.ok{background:var(--gain-soft);color:var(--gain)} .pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--loss-soft);color:var(--loss)} .pill.info{background:var(--info-soft);color:var(--info)}
+.pill.acc{background:var(--accent-soft);color:var(--accent)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.dot.live{box-shadow:0 0 0 0 currentColor;animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,currentColor 45%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 15px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:500 14px/1.2 var(--f-body);text-decoration:none;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.danger{background:var(--loss);border-color:var(--loss);color:var(--danger-ink)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--accent)}
+.btn.sm{padding:6px 11px;font-size:13px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.block{width:100%}
+.kpi{display:flex;flex-direction:column;gap:6px}
+.kpi .v{font-family:var(--f-mono);font-size:22px;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.kpi .s{font-size:12.5px;color:var(--muted)}
+.gain{color:var(--gain)} .loss{color:var(--loss)} .warnc{color:var(--warn)}
+.demo-flag{display:inline-flex;align-items:center;gap:6px;font-size:12px;border:1px dashed var(--warn);color:var(--warn);border-radius:999px;padding:1px 9px}
+.meter{height:8px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.meter.warn i{background:var(--warn)} .meter.bad i{background:var(--loss)}
+.table-wrap{overflow-x:auto;margin-inline:-4px}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th{font-size:12px;color:var(--muted);text-align:left;font-weight:500;letter-spacing:.02em;white-space:nowrap}
+.tbl td,.tbl th{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl td.num,.tbl th.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.sig{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.sig i{width:8px;height:8px;border-radius:2px;display:inline-block}
+.chart-box{position:relative;height:240px}
+.chart-box.tall{height:300px}
+.chart-box.short{height:180px}
+.fallback{display:grid;place-items:center;height:100%;color:var(--muted);font-size:13px;border:1px dashed var(--line);border-radius:10px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:500;font-size:13px}
+.input{width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:400 14px var(--f-body)}
+.input:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:13.5px}
+.check input{margin-top:3px;accent-color:var(--accent);width:16px;height:16px;flex:none}
+.note{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:10px;background:var(--info-soft);color:var(--ink);font-size:13px}
+.note .ic{color:var(--info);margin-top:2px}
+.note.warn{background:var(--warn-soft)} .note.warn .ic{color:var(--warn)}
+.note.ok{background:var(--gain-soft)} .note.ok .ic{color:var(--gain)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;padding:2px;background:var(--bg);flex-wrap:wrap}
+.seg button{border:0;background:none;padding:6px 11px;border-radius:7px;font:500 13px var(--f-body);color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;margin-bottom:14px}
+.tabs button{border:0;background:none;padding:9px 12px;font:500 13.5px var(--f-body);color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* switch */
+.sw{position:relative;display:inline-block;width:38px;height:22px;flex:none}
+.sw input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;z-index:1}
+.sw span{position:absolute;inset:0;border-radius:99px;background:var(--track);transition:background .15s}
+.sw span::after{content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;border-radius:50%;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.sw input:checked+span{background:var(--accent)}
+.sw input:checked+span::after{transform:translateX(16px)}
+.sw input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+
+/* strategy builder */
+.builder{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:1180px){.builder{grid-template-columns:1fr}}
+.side-sticky{position:sticky;top:16px;display:flex;flex-direction:column;gap:16px}
+@media (max-width:1180px){.side-sticky{position:static}}
+.block{border:1px solid var(--line);border-radius:11px;background:var(--surface);transition:border-color .15s}
+.block.on{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.block-h{display:flex;gap:12px;align-items:flex-start;padding:13px 14px}
+.block-h .bt{min-width:0;flex:1}
+.tag{font-family:var(--f-mono);font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:0 5px;margin-left:4px}
+.params{padding:2px 14px 14px;display:flex;flex-direction:column;gap:14px;border-top:1px dashed var(--line);padding-top:12px}
+.prow{display:flex;flex-direction:column;gap:6px}
+.prow label{font-size:13px;font-weight:500}
+.pctl{display:grid;grid-template-columns:minmax(0,1fr) 112px;gap:12px;align-items:center}
+.pnum{display:flex;align-items:center;gap:6px}
+.pnum input{width:72px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:500 13px var(--f-mono);text-align:right}
+.pnum .unit{font-size:12px;color:var(--muted);white-space:nowrap}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:6px;margin:8px 0;
+  background:linear-gradient(to right,var(--track) 0 var(--a),var(--rec) var(--a) var(--b),var(--track) var(--b) 100%)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--surface);border:2px solid var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--surface);border:2px solid var(--accent);cursor:pointer}
+.legend-rec{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.legend-rec i{width:22px;height:6px;border-radius:4px;background:var(--rec);display:inline-block}
+.prio{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.prio li{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--surface)}
+.prio li .n{font-family:var(--f-mono);font-size:12px;color:var(--muted);width:18px}
+.prio li .grow{flex:1;min-width:0}
+.iconbtn{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.iconbtn[disabled]{opacity:.35;cursor:default}
+.checks{display:flex;flex-direction:column;gap:7px;margin:0;padding:0;list-style:none}
+.checks li{display:flex;gap:9px;align-items:flex-start;font-size:13px}
+.checks .ic{margin-top:2px}
+.preview-wrap{position:relative;height:300px}
+.preview-wrap canvas{width:100%;height:100%;display:block}
+pre.code{margin:0;padding:12px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--line);font:12.5px/1.6 var(--f-mono);overflow:auto;max-height:340px;white-space:pre}
+.diff-add{color:var(--gain)} .diff-del{color:var(--loss)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font:500 13px var(--f-body);color:var(--ink);cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+
+/* timeline */
+.tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.tl li{display:grid;grid-template-columns:20px minmax(0,1fr);gap:12px;padding-bottom:18px;position:relative}
+.tl li::before{content:"";position:absolute;left:9px;top:20px;bottom:0;width:2px;background:var(--line)}
+.tl li:last-child::before{display:none}
+.tl .mk{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);color:var(--muted);margin-top:1px}
+.tl .mk .ic{width:12px;height:12px;stroke-width:2.6}
+.tl .mk.ok{background:var(--gain-soft);color:var(--gain)} .tl .mk.warn{background:var(--warn-soft);color:var(--warn)} .tl .mk.bad{background:var(--loss-soft);color:var(--loss)}
+.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;font-size:12.5px;margin-top:8px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-family:var(--f-mono);overflow-wrap:anywhere}
+
+/* heatmap */
+.heat{display:grid;gap:3px;font-size:11.5px;min-width:420px}
+.heat .h{color:var(--muted);text-align:center;font-family:var(--f-mono)}
+.heat .rl{color:var(--muted);display:flex;align-items:center}
+.heat .c{height:34px;border-radius:5px;display:grid;place-items:center;font-family:var(--f-mono);color:var(--ink);background:var(--surface-2)}
+
+/* modal + toast */
+.overlay{position:fixed;inset:0;z-index:50;background:rgba(8,14,13,.48);display:grid;place-items:center;padding:16px}
+.sheet{width:min(560px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:var(--surface);border-radius:16px;box-shadow:var(--shadow);padding:22px;display:flex;flex-direction:column;gap:14px}
+@media (max-width:600px){.overlay{place-items:end center;padding:0}.sheet{border-radius:16px 16px 0 0;width:100%;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}}
+.toast{position:fixed;right:20px;bottom:20px;z-index:60;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+@media (max-width:880px){.toast{left:16px;right:16px;bottom:84px}}
+.toast div{background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;font-size:13.5px;box-shadow:var(--shadow);animation:tin .2s ease-out}
+@keyframes tin{from{transform:translateY(6px);opacity:.4}to{transform:none;opacity:1}}
+.pk{display:grid;place-items:center;gap:12px;padding:10px 0 4px;text-align:center}
+.pk svg{width:84px;height:84px}
+.pk .ring{fill:none;stroke:var(--line);stroke-width:3}
+.pk .arc{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round;stroke-dasharray:252;stroke-dashoffset:252;animation:arc 1.3s ease-out forwards;transform-origin:50% 50%;transform:rotate(-90deg)}
+.pk .face{fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round}
+.pk.done .arc{stroke:var(--gain);stroke-dashoffset:0;animation:none}
+@keyframes arc{to{stroke-dashoffset:0}}
+
+/* auth + landing */
+.auth{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:28px;padding-block:8px 24px}
+.auth.narrow{max-width:460px}
+.brandrow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:28px;align-items:center}
+@media (max-width:860px){.hero{grid-template-columns:1fr}}
+.display{font-size:clamp(30px,4.6vw,46px);line-height:1.12;letter-spacing:-.025em}
+.lead{font-size:16px;color:var(--muted);max-width:60ch}
+.lead strong{color:var(--ink);font-weight:600}
+.hero-panel{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px}
+.feature .ic{color:var(--accent)}
+.steps{list-style:none;counter-reset:s;margin:0;padding:0;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr))}
+.steps li{counter-increment:s;display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:2px solid var(--line)}
+.steps li::before{content:counter(s,decimal-leading-zero);font:500 12px var(--f-mono);color:var(--accent)}
+.fine{font-size:12px;color:var(--muted);max-width:80ch}
+.otp{display:flex;gap:8px}
+.otp input{width:46px;height:54px;text-align:center;font:500 22px var(--f-mono);border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.otp input:focus{outline:2px solid var(--accent);border-color:transparent}
+@media (max-width:400px){.otp input{width:40px;height:48px}}
+.strength{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.strength i{height:4px;border-radius:4px;background:var(--surface-2)}
+.strength.s1 i:nth-child(-n+1){background:var(--loss)}
+.strength.s2 i:nth-child(-n+2){background:var(--warn)}
+.strength.s3 i:nth-child(-n+3){background:var(--accent)}
+.strength.s4 i{background:var(--gain)}
+
+/* onboarding */
+.stepper{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;list-style:none;margin:0;padding-left:0}
+.stepper li{flex:1 0 118px;display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted)}
+.stepper li i{height:4px;border-radius:4px;background:var(--surface-2)}
+.stepper li.done i{background:var(--accent)} .stepper li.cur i{background:var(--accent);opacity:.55}
+.stepper li.cur{color:var(--ink);font-weight:500}
+.browser{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.browser .bar{display:flex;align-items:center;gap:8px;background:var(--surface-2);padding:8px 12px;font:12px var(--f-mono);color:var(--muted);overflow-wrap:anywhere}
+.browser .bar .ic{width:14px;height:14px;color:var(--gain)}
+.browser .body{padding:16px;display:flex;flex-direction:column;gap:12px}
+.codebox{font:600 22px var(--f-mono);letter-spacing:.12em;padding:12px;border-radius:10px;background:var(--bg);border:1px solid var(--line);text-align:center}
+.prog{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.prog li{display:flex;gap:10px;align-items:center;font-size:13.5px;color:var(--muted)}
+.prog li.done{color:var(--ink)} .prog li.done .mk{background:var(--gain-soft);color:var(--gain)}
+.prog li.run .mk{background:var(--accent-soft);color:var(--accent)}
+.prog .mk{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2)}
+.prog .mk .ic{width:13px;height:13px;stroke-width:2.6}
+.spin{width:12px;height:12px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ops */
+.funnel{display:flex;flex-direction:column;gap:8px}
+.funnel .fr{display:grid;grid-template-columns:72px minmax(0,1fr) 34px;gap:10px;align-items:center;font-size:13px}
+.funnel .fb{height:22px;border-radius:6px;background:var(--accent-soft);position:relative;overflow:hidden}
+.funnel .fb i{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:6px}
+textarea.input{min-height:110px;resize:vertical;line-height:1.6}
+.copyout{padding:12px;border-radius:10px;background:var(--bg);border:1px solid var(--line);font-size:13.5px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
+.copyout mark{background:var(--loss-soft);color:var(--loss);border-radius:4px;padding:0 2px}
+.bigstop{display:flex;align-items:center;gap:14px;padding:18px;border-radius:14px;border:1px solid color-mix(in srgb,var(--loss) 45%,var(--line));background:var(--loss-soft)}
+.bigstop .btn{margin-left:auto}
+.coach{position:fixed;inset:0;z-index:70}
+.coach .hole{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(8,14,13,.58);outline:2px solid var(--accent);outline-offset:2px;pointer-events:none;transition:left .25s ease,top .25s ease,width .25s ease,height .25s ease}
+.coach .tip{position:fixed;width:min(350px,calc(100vw - 24px));background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:10px;transition:left .25s ease,top .25s ease}
+.coach .tip p{color:var(--muted);font-size:13.5px}
+.coach .ctrl{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.coach .dots{display:flex;gap:5px}
+.coach .dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.coach .dots i.on{background:var(--accent)}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="shell" id="shell">
+  <aside class="rail" aria-label="Main">
+    <a class="brand" href="#dash" id="brand"></a>
+    <nav class="navlist" id="railnav"></nav>
+    <div class="rail-foot" id="railfoot"></div>
+  </aside>
+  <main class="main" id="main">
+    <div id="view"></div>
+    <footer class="foot" id="foot"></footer>
+  </main>
+</div>
+<nav class="tabbar" id="tabbar" aria-label="Main"></nav>
+<div class="overlay" id="overlay" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script>
+"use strict";
+/* ============ language ============ */
+let LANG='zh';try{const v=localStorage.getItem('exbot-lang');if(v==='en'||v==='zh')LANG=v}catch(e){}
+const tr=(zh,en)=>LANG==='en'?en:zh;
+const pick=a=>Array.isArray(a)?(LANG==='en'?a[1]:a[0]):a;
+const LOC=()=>LANG==='en'?'en-AU':'zh-CN';
+function setLang(l){LANG=l;try{localStorage.setItem('exbot-lang',l)}catch(e){}document.documentElement.lang=l==='en'?'en':'zh-CN';render()}
+const langBtn=()=>`<button class="btn sm" data-lang aria-label="${tr('Switch to English','切换到中文')}">${tr('EN','中文')}</button>`;
+
+/* ============ utilities ============ */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
+const getP=(o,p)=>p.split('.').reduce((a,k)=>a==null?a:a[k],o);
+function setP(o,p,v){const ks=p.split('.');let a=o;for(let i=0;i<ks.length-1;i++)a=a[ks[i]];a[ks[ks.length-1]]=v}
+const fmtAud=(v,sign)=>{const s=Math.abs(Math.round(v)).toLocaleString('en-AU');return(v<0?'−':(sign&&v>0?'+':''))+'A$'+s};
+const fmtNum=(v,d=0)=>Number(v).toLocaleString('en-AU',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtPct=(v,d=1)=>(v*100).toFixed(d)+'%';
+function rngFrom(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296}}
+function randn(r){let u=0,v=0;while(u===0)u=r();while(v===0)v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function rgba(hex,a){hex=(hex||'#888888').replace('#','');if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');const n=parseInt(hex,16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`}
+function themeColors(){const cs=getComputedStyle(document.documentElement);const g=n=>cs.getPropertyValue(n).trim();
+  return{bg:g('--bg'),surface:g('--surface'),ink:g('--ink'),muted:g('--muted'),line:g('--line'),accent:g('--accent'),gain:g('--gain'),loss:g('--loss'),warn:g('--warn'),info:g('--info')}}
+
+/* time zones: New York session vs Sydney clock */
+function tzParts(ts,tz){const f=new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',weekday:'short'});const o={};for(const p of f.formatToParts(new Date(ts)))o[p.type]=p.value;return o}
+function tzOffsetMin(ts,tz){const o=tzParts(ts,tz);return(Date.UTC(+o.year,+o.month-1,+o.day,(+o.hour)%24,+o.minute,+o.second)-ts)/60000}
+function zonedToUtc(y,m,d,hh,mm,tz){let g=Date.UTC(y,m-1,d,hh,mm);for(let i=0;i<3;i++)g=Date.UTC(y,m-1,d,hh,mm)-tzOffsetMin(g,tz)*60000;return g}
+const fmtIn=(ts,tz,opts)=>new Intl.DateTimeFormat(LOC(),{timeZone:tz,hourCycle:'h23',...opts}).format(new Date(ts));
+const hm=(ts,tz)=>fmtIn(ts,tz,{hour:'2-digit',minute:'2-digit'});
+function nextOpen(){const now=Date.now();for(let d=1;d<10;d++){const p=tzParts(now+d*86400000,'America/New_York');if(p.weekday==='Sat'||p.weekday==='Sun')continue;return zonedToUtc(+p.year,+p.month,+p.day,9,30,'America/New_York')}return now+86400000}
+function sessionInSydney(){const o=nextOpen(),p=tzParts(o,'America/New_York'),c=zonedToUtc(+p.year,+p.month,+p.day,16,0,'America/New_York');return `${hm(o,'Australia/Sydney')}–${hm(c,'Australia/Sydney')}`}
+function openLabel(ts){const o={month:'short',day:'numeric',weekday:'short',hour:'2-digit',minute:'2-digit'};return tr(`纽约 ${fmtIn(ts,'America/New_York',o)} · 悉尼 ${fmtIn(ts,'Australia/Sydney',o)}`,`New York ${fmtIn(ts,'America/New_York',o)} · Sydney ${fmtIn(ts,'Australia/Sydney',o)}`)}
+async function sha256Hex(s){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0}return h.toString(16).padStart(8,'0').repeat(8)}}
+function canon(o){if(Array.isArray(o))return'['+o.map(canon).join(',')+']';if(o&&typeof o==='object')return'{'+Object.keys(o).sort().map(k=>JSON.stringify(k)+':'+canon(o[k])).join(',')+'}';return JSON.stringify(o)}
+function toast(msg){const t=document.createElement('div');t.textContent=msg;$('#toast').appendChild(t);setTimeout(()=>t.remove(),3200)}
+async function copyText(txt,btn){try{await navigator.clipboard.writeText(txt);toast(tr('已复制','Copied'))}catch(e){const el=btn&&btn.parentElement&&btn.parentElement.querySelector('[data-copy-src]');if(el){const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r)}toast(tr('已选中,请手动复制','Selected. Copy it manually.'))}}
+
+/* ============ icons ============ */
+const ICONS={
+grid:'<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>',
+blocks:'<path d="M4 8h7v7H4z"/><path d="M13 3.5h7v7h-7z"/><path d="M13 13.5h7v7h-7z"/><path d="M11 11.5h2"/>',
+shield:'<path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+chart:'<path d="M4 20V11M10 20V5M16 20v-6M2 20.5h20"/>',
+history:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+route:'<circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h6a4 4 0 0 0 0-8h-4a4 4 0 0 1 0-8h6"/>',
+brief:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/>',
+more:'<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>',
+check:'<path d="M5 12.5l4.5 4.5L19 7"/>',alert:'<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/>',
+info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>',
+copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
+x:'<path d="M6 6l12 12M18 6L6 18"/>',out:'<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10"/>',
+key:'<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3"/>',up:'<path d="M12 19V5M6 11l6-6 6 6"/>',down:'<path d="M12 5v14M6 13l6 6 6-6"/>',
+stop:'<rect x="6" y="6" width="12" height="12" rx="2"/>',play:'<path d="M8 5l11 7-11 7z"/>',
+server:'<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/>',
+mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+bolt:'<path d="M13 3L5 13h6l-1 8 8-10h-6z"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5h4"/>'
+};
+const ic=(n,c='')=>`<svg class="ic ${c}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]||''}</svg>`;
+const LOGO=`<svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="8" fill="var(--accent)"/><path d="M7 21l5-6 4 3 6-8" fill="none" stroke="var(--accent-ink)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="10" r="2.2" fill="var(--accent-ink)"/></svg><b>ExBot!</b>`;
+const HOST='inst-7f3a.exbot.example';
+
+/* ============ demo data ============ */
+const SIG={trend:{n:['趋势跟随','Trend follow'],k:'T',c:0},breakout:{n:['动量突破','Momentum breakout'],k:'B',c:1},orb:{n:['开盘区间突破','Opening range breakout'],k:'O',c:2},
+  mr:{n:['均值回归','Mean reversion'],k:'M',c:3},cross:{n:['均线交叉','MA crossover'],k:'X',c:4},rsi:{n:['RSI 反转','RSI reversal'],k:'R',c:5}};
+const sigName=k=>pick(SIG[k].n);
+const REASON={tp:['止盈','Target'],sl:['止损','Stop'],eod:['收盘强平','Close-out']};
+function genTrades(){
+  const r=rngFrom(20261005),out=[],HOL=new Set(['2026-09-07']);let px=28650,id=1;
+  const types=[['breakout',.45],['trend',.25],['orb',.15],['mr',.15]],pWin={breakout:.40,trend:.45,orb:.47,mr:.56};
+  for(let t=Date.UTC(2026,6,6);t<=Date.UTC(2026,9,2);t+=86400000){
+    const d=new Date(t),wd=d.getUTCDay();if(wd===0||wd===6)continue;const ds=d.toISOString().slice(0,10);if(HOL.has(ds))continue;
+    px+=randn(r)*110+5;const k=[0,1,1,2,2,2,3,3,4][Math.floor(r()*9)];const used=new Set();
+    for(let j=0;j<k;j++){
+      let x=r(),type='breakout';for(const[ty,w]of types){if(x<w){type=ty;break}x-=w}
+      let ny=type==='orb'?570+Math.floor(r()*45):600+Math.floor(r()*340);while(used.has(Math.floor(ny/20)))ny+=23;if(ny>955)ny=610+Math.floor(r()*200);used.add(Math.floor(ny/20));
+      const ts=zonedToUtc(d.getUTCFullYear(),d.getUTCMonth()+1,d.getUTCDate(),Math.floor(ny/60),ny%60,'America/New_York');
+      const dir=r()<.52?1:-1,win=r()<pWin[type],stop=type==='mr'?25:60,tgt=type==='mr'?18+Math.round(r()*20):90;let pts,reason,hold;
+      if(r()<.07){pts=Math.round(randn(r)*18);reason='eod';hold=40+Math.floor(r()*120)}else if(win){pts=tgt;reason='tp';hold=14+Math.floor(r()*80)}else{pts=-stop;reason='sl';hold=4+Math.floor(r()*55)}
+      const entry=Math.round((px+randn(r)*40)*10)/10;
+      out.push({id:id++,date:ds,ts,type,dir,entry,exit:Math.round((entry+dir*pts)*10)/10,pts,pnl:(pts-1)*2,reason,hold});
+    }
+  }
+  return out.sort((a,b)=>a.ts-b.ts);
+}
+function genBars(seed=11,n=240,start=29180){const r=rngFrom(seed),bars=[];let c=start,drift=0;const D=[-1.0,0.3,1.4,-0.5,1.0,-1.5];
+  for(let i=0;i<n;i++){if(i%40===0)drift=D[(i/40)%6]+(r()-.5)*.4;const o=c,sg=i<60?5.0:4.0;c=o+drift+randn(r)*sg;
+    bars.push({o,c,h:Math.max(o,c)+Math.abs(randn(r))*2.2,l:Math.min(o,c)-Math.abs(randn(r))*2.2})}return bars}
+const TRADES=genTrades(),BARS=genBars();
+function daily(ts){const m=new Map();for(const t of ts)m.set(t.date,(m.get(t.date)||0)+t.pnl);let eq=10000,pk=10000;return[...m.keys()].sort().map(d=>{eq+=m.get(d);pk=Math.max(pk,eq);return{date:d,pnl:m.get(d),eq,dd:eq-pk}})}
+function stats(ts){const n=ts.length,w=ts.filter(t=>t.pnl>0),l=ts.filter(t=>t.pnl<=0);const gw=w.reduce((a,t)=>a+t.pnl,0),gl=-l.reduce((a,t)=>a+t.pnl,0);let eq=0,pk=0,mdd=0;for(const t of ts){eq+=t.pnl;pk=Math.max(pk,eq);mdd=Math.min(mdd,eq-pk)}
+  return{n,wr:n?w.length/n:0,pf:gl?gw/gl:0,net:gw-gl,mdd,hold:n?ts.reduce((a,t)=>a+t.hold,0)/n:0}}
+
+/* ============ app state ============ */
+const DEFAULT_STRATEGY={
+  bar:'15s',
+  signals:{trend:{on:true,ema:20,bars:5,dist:3},breakout:{on:true,look:15,body:8,dist:8},orb:{on:true,rangeMin:15,minRange:35,body:15,window:30},
+    mr:{on:false,period:20,k:2,warm:30,maxPer:2},cross:{on:false,fast:9,slow:21},rsi:{on:false,period:14,lo:30,hi:70}},
+  filters:{adx:{on:true,period:14,th:19},cooldown:{on:true,trend:2,chop:5},cap:{on:false,max:3},gap:{on:false,sec:120}},
+  exit:{mode:'points',stop:60,target:90,atrStop:1.5,atrTarget:2.25,time:{on:false,min:120}},
+  priority:['orb','breakout','trend','mr','cross','rsi']
+};
+const S={
+  authed:false,tour:true,stopped:false,stopMode:'keep',
+  strategy:clone(DEFAULT_STRATEGY),effective:clone(DEFAULT_STRATEGY),version:12,
+  risk:{size:2,daily:400,rate:6},riskDraft:{size:2,daily:400,rate:6},
+  versions:[
+    {v:12,status:'active',title:['动量突破最小实体 6 → 8 点;启用开盘区间突破','Breakout minimum body 6 → 8 pts; opening range breakout enabled'],signed:'2026-09-29 21:14',device:['iPhone · Face ID(iCloud 钥匙串同步)','iPhone · Face ID (iCloud Keychain)'],hash:'9c41e07a5b2d4e10',verified:'2026-09-29 21:15:07',eff:['纽约 9月30日 09:30 · 悉尼 9月30日 23:30','New York 30 Sep 09:30 · Sydney 30 Sep 23:30']},
+    {sec:true,status:'rejected',title:['收到 1 条未通过验签的变更请求,服务器已拒绝','1 change request failed signature check and was rejected'],at:'2026-09-28 03:02',
+      detail:['签名与你注册的 passkey 不匹配。服务器继续运行 v11,并直接向你的邮箱发送了通知;我们的网站无法拦截这条通知。','The signature did not match your registered passkey. Your server kept running v11 and emailed you directly. Our website cannot block that email.']},
+    {v:11,status:'superseded',title:['冷却时间:趋势市 3 → 2 分钟','Cooldown in trending market: 3 → 2 min'],signed:'2026-09-21 20:40',device:['MacBook · Touch ID','MacBook · Touch ID'],hash:'31be9f0c77a1d2e8',verified:'2026-09-21 20:41:55',eff:['纽约 9月22日 09:30 · 悉尼 9月22日 23:30','New York 22 Sep 09:30 · Sydney 22 Sep 23:30']},
+    {v:10,status:'superseded',title:['首个版本:趋势跟随 + 动量突破,止损 60 / 止盈 90','First version: trend follow + breakout, stop 60 / target 90'],signed:'2026-09-15 19:02',device:['iPhone · Face ID(iCloud 钥匙串同步)','iPhone · Face ID (iCloud Keychain)'],hash:'e07d21aa4c9b5f63',verified:'2026-09-15 19:03:12',eff:['纽约 9月16日 09:30 · 悉尼 9月16日 23:30','New York 16 Sep 09:30 · Sydney 16 Sep 23:30']}
+  ],
+  riskPending:[{id:'r1',title:['日内最大亏损 A$400 → A$500','Daily loss limit A$400 → A$500'],status:'pending',eff:Date.now()+18.5*3600e3,signed:'2026-10-04 20:41 · iPhone · Face ID'}],
+  onboard:0,onboardOk:{},repPeriod:'all',builderTab:'signals',outTab:'spec',signupEmail:''
+};
+
+/* ============ parameter catalogue: allowed range + recommended zone ============ */
+const PARAMS={
+ 'signals.trend.ema':{l:['主 EMA 周期','Main EMA period'],min:5,max:100,step:1,rec:[10,40],u:['根','bars']},
+ 'signals.trend.bars':{l:['连续在 EMA 同侧的根数','Bars on the same side of EMA'],min:2,max:20,step:1,rec:[3,8],u:['根','bars']},
+ 'signals.trend.dist':{l:['距 EMA 最小距离','Min distance from EMA'],min:0,max:30,step:.5,rec:[2,10],u:['点','pts']},
+ 'signals.breakout.look':{l:['突破回看根数','Breakout lookback'],min:5,max:60,step:1,rec:[10,30],u:['根','bars']},
+ 'signals.breakout.body':{l:['K 线最小实体','Min candle body'],min:0,max:40,step:.5,rec:[5,15],u:['点','pts']},
+ 'signals.breakout.dist':{l:['距 EMA 最小距离','Min distance from EMA'],min:0,max:40,step:.5,rec:[5,15],u:['点','pts']},
+ 'signals.orb.rangeMin':{l:['开盘区间形成时长','Opening range length'],min:5,max:60,step:5,rec:[15,30],u:['分钟','min']},
+ 'signals.orb.minRange':{l:['最小区间高度','Min range height'],min:5,max:100,step:1,rec:[20,50],u:['点','pts']},
+ 'signals.orb.body':{l:['突破 K 线最小实体','Min breakout body'],min:0,max:40,step:.5,rec:[8,20],u:['点','pts']},
+ 'signals.orb.window':{l:['突破入场窗口','Entry window'],min:10,max:90,step:5,rec:[20,45],u:['分钟','min']},
+ 'signals.mr.period':{l:['布林带周期','Bollinger period'],min:5,max:100,step:1,rec:[15,30],u:['根','bars']},
+ 'signals.mr.k':{l:['带宽倍数','Band width'],min:1,max:3.5,step:.1,rec:[1.8,2.5],u:['σ','σ']},
+ 'signals.mr.warm':{l:['开盘后热身','Warm-up after open'],min:0,max:60,step:1,rec:[20,40],u:['根','bars']},
+ 'signals.mr.maxPer':{l:['每个交易时段最多','Max per session'],min:1,max:10,step:1,rec:[1,3],u:['笔','trades']},
+ 'signals.cross.fast':{l:['快线周期','Fast MA period'],min:2,max:60,step:1,rec:[5,15],u:['根','bars']},
+ 'signals.cross.slow':{l:['慢线周期','Slow MA period'],min:5,max:200,step:1,rec:[20,60],u:['根','bars']},
+ 'signals.rsi.period':{l:['RSI 周期','RSI period'],min:2,max:50,step:1,rec:[7,21],u:['根','bars']},
+ 'signals.rsi.lo':{l:['超卖线','Oversold level'],min:5,max:50,step:1,rec:[20,35],u:['','']},
+ 'signals.rsi.hi':{l:['超买线','Overbought level'],min:50,max:95,step:1,rec:[65,80],u:['','']},
+ 'filters.adx.period':{l:['ADX 周期','ADX period'],min:5,max:40,step:1,rec:[10,20],u:['根','bars']},
+ 'filters.adx.th':{l:['趋势市阈值','Trending threshold'],min:10,max:40,step:.5,rec:[18,25],u:['','']},
+ 'filters.cooldown.trend':{l:['趋势市亏损后冷却','Cooldown after loss, trending'],min:0,max:30,step:1,rec:[1,5],u:['分钟','min']},
+ 'filters.cooldown.chop':{l:['震荡市亏损后冷却','Cooldown after loss, ranging'],min:0,max:60,step:1,rec:[3,10],u:['分钟','min']},
+ 'filters.cap.max':{l:['每个交易时段最多开仓','Max entries per session'],min:1,max:20,step:1,rec:[2,6],u:['笔','trades']},
+ 'filters.gap.sec':{l:['同类信号最小间隔','Min gap between same signal'],min:15,max:1800,step:15,rec:[60,600],u:['秒','sec']},
+ 'exit.stop':{l:['止损距离','Stop distance'],min:5,max:200,step:1,rec:[30,90],u:['点','pts']},
+ 'exit.target':{l:['止盈距离','Target distance'],min:5,max:300,step:1,rec:[45,150],u:['点','pts']},
+ 'exit.atrStop':{l:['止损 = ATR ×','Stop = ATR ×'],min:.5,max:5,step:.05,rec:[1,2.5],u:['倍','×']},
+ 'exit.atrTarget':{l:['止盈 = ATR ×','Target = ATR ×'],min:.5,max:8,step:.05,rec:[1.5,4],u:['倍','×']},
+ 'exit.time.min':{l:['最长持仓','Max holding time'],min:5,max:390,step:5,rec:[30,240],u:['分钟','min']}
+};
+const BLOCKS={
+ signals:[
+  ['signals.trend',SIG.trend.n,['价格连续多根收在 EMA 同一侧且拉开距离时,顺势入场。','Enter with the trend when price closes on one side of the EMA for several bars and pulls away.'],['ema','bars','dist'],'S2'],
+  ['signals.breakout',SIG.breakout.n,['收盘突破前 N 根的最高或最低点,并且 K 线实体足够大。','Close breaks the high or low of the last N bars with a large enough candle body.'],['look','body','dist'],'S3'],
+  ['signals.orb',SIG.orb.n,['美股开盘后先记录一段区间,之后向上或向下突破时入场,每天最多一次。','Record a range after the US open, then enter on the first breakout. At most once a day.'],['rangeMin','minRange','body','window'],'S4'],
+  ['signals.mr',SIG.mr.n,['价格冲出布林带外轨后重新回到带内时反向入场,目标回到均值。','Fade a move back inside the Bollinger band, targeting the mean.'],['period','k','warm','maxPer'],'S5'],
+  ['signals.cross',SIG.cross.n,['快线上穿慢线做多,下穿做空。震荡市里假信号较多。','Buy when the fast MA crosses above the slow MA, sell on the cross below. Many false signals in ranges.'],['fast','slow'],'S1'],
+  ['signals.rsi',SIG.rsi.n,['RSI 从超卖区回升时做多,从超买区回落时做空。','Buy when RSI leaves oversold, sell when it leaves overbought.'],['period','lo','hi'],'S6']
+ ],
+ filters:[
+  ['filters.adx',['趋势 / 震荡切换(ADX)','Trend / range switch (ADX)'],['ADX 高于阈值视为趋势市,只运行顺势信号;低于阈值只运行均值回归。','Above the threshold only trend signals run; below it only mean reversion runs.'],['period','th'],'F1'],
+  ['filters.cooldown',['亏损后冷却','Cooldown after a loss'],['一笔亏损平仓后,暂停开新仓一段时间,趋势市与震荡市分开设置。','Pause new entries after a losing trade, set separately for trending and ranging markets.'],['trend','chop'],'F2'],
+  ['filters.cap',['每时段开仓上限','Entries per session'],['每个美股交易时段最多开几笔。','Maximum entries in one US session.'],['max'],'F3'],
+  ['filters.gap',['同类信号最小间隔','Gap between same signal'],['同一类信号两次入场之间至少间隔多久。','Minimum time between two entries from the same signal.'],['sec'],'F4']
+ ]
+};
+
+/* ============ routing + shell ============ */
+const NAV=[
+ {id:'dash',l:['总览','Overview'],i:'grid'},{id:'strategy',l:['策略配置','Strategy'],i:'blocks'},{id:'risk',l:['风控与停止','Risk & stop'],i:'shield'},{id:'reports',l:['报表','Reports'],i:'chart'},
+ {id:'history',l:['版本与签名','Versions'],i:'history'},{id:'security',l:['安全中心','Security'],i:'lock'},{sep:true,grp:['实施与运营','Setup & operations']},
+ {id:'onboard',l:['开户引导','Onboarding'],i:'route'},{id:'ops',l:['运营后台','Admin console'],i:'brief'}
+];
+const PUBLIC=['home','signup','verify','passkey','login'];
+let charts=[],cleanups=[];
+function route(){return(location.hash||'').slice(1)||(S.authed?'dash':'home')}
+function go(r){if(location.hash==='#'+r)render();else location.hash=r}
+function render(){
+  charts.forEach(c=>{try{c.destroy()}catch(e){}});charts=[];cleanups.forEach(f=>f());cleanups=[];
+  let r=route();if(!VIEWS[r])r='dash';if(!PUBLIC.includes(r)&&!S.authed)r='login';
+  const pub=PUBLIC.includes(r);$('#shell').classList.toggle('public',pub);$('#tabbar').hidden=pub;$('#foot').hidden=pub;
+  $('#foot').textContent=tr('原型版本 · 页面中的账户、成交、收入与客户数据均为演示数据,不代表任何策略的真实或预期表现 · 本平台提供软件工具与实施服务,不提供投资建议。','Prototype · All account, trade, revenue and client figures are demo data and do not represent real or expected results of any strategy · ExBot! provides software and setup services, not investment advice.');
+  if(COACH&&r!=='dash')endCoach();
+  renderNav(r);$('#view').innerHTML=VIEWS[r].html();if(VIEWS[r].mount)VIEWS[r].mount();window.scrollTo(0,0);
+  if(COACH)showCoach();
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-lang]');if(b)setLang(LANG==='en'?'zh':'en');const c=e.target.closest('[data-coach]');if(c){e.preventDefault();if(!$('#overlay').hidden)closeSheet();startCoach()}});
+const instStatus=()=>S.stopped?`<span class="pill bad"><span class="dot"></span>${tr('交易已停止','Trading stopped')}</span>`:`<span class="pill ok"><span class="dot live"></span>${tr('运行中 · 12 秒前报到','Running · checked in 12 s ago')}</span>`;
+function renderNav(r){
+  $('#brand').innerHTML=LOGO;
+  $('#railnav').innerHTML=NAV.map(n=>n.sep?`<div class="sep"></div><div class="grp">${pick(n.grp)}</div>`:`<a href="#${n.id}" ${n.id===r?'aria-current="page"':''}>${ic(n.i)}${pick(n.l)}</a>`).join('');
+  $('#railfoot').innerHTML=`<div class="inst"><div class="row" style="justify-content:space-between"><b class="small">${tr('你的服务器','Your server')}</b>${S.stopped?`<span class="pill bad">${tr('已停止','Stopped')}</span>`:`<span class="pill ok"><span class="dot live"></span>${tr('正常','Healthy')}</span>`}</div>
+   <span class="mono small muted">inst-7f3a · ap-southeast-2</span><span class="mono small muted">runtime v1.3.2 · ${tr('策略','strategy')} v${S.version}</span></div>
+   <button class="btn ghost sm" data-coach style="justify-content:flex-start">${ic('info')}${tr('界面导览','UI tour')}</button>
+   <a class="btn ghost sm" href="#home" style="justify-content:flex-start">${ic('route')}${tr('注册流程演示','Sign-up walkthrough')}</a>
+   <button class="btn sm" id="logout">${ic('out')}${tr('退出登录','Sign out')}</button>`;
+  $('#logout').onclick=()=>{S.authed=false;toast(tr('已退出登录','Signed out'));go('home')};
+  const tabs=[NAV[0],NAV[1],NAV[3],NAV[2]],tabL={dash:['总览','Home'],strategy:['策略','Strategy'],reports:['报表','Reports'],risk:['风控','Risk']};
+  $('#tabbar').innerHTML=tabs.map(n=>`<a href="#${n.id}" ${n.id===r?'aria-current="page"':''}>${ic(n.i,'lg')}${pick(tabL[n.id])}</a>`).join('')+`<button id="moreBtn" ${['history','security','onboard','ops'].includes(r)?'aria-current="page"':''}>${ic('more','lg')}${tr('更多','More')}</button>`;
+  $('#moreBtn').onclick=()=>openSheet(`<h2 id="sheet-title">${tr('更多','More')}</h2><div class="navlist">${NAV.filter(n=>!n.sep&&!tabs.includes(n)).map(n=>`<a href="#${n.id}" data-close>${ic(n.i)}${pick(n.l)}</a>`).join('')}<div class="sep"></div>
+    <a href="#dash" data-close data-coach>${ic('info')}${tr('界面导览','UI tour')}</a><a href="#home" data-close>${ic('route')}${tr('注册流程演示','Sign-up walkthrough')}</a><a href="#home" id="lo2">${ic('out')}${tr('退出登录','Sign out')}</a></div>`,el=>{$$('[data-close]',el).forEach(a=>a.addEventListener('click',closeSheet));$('#lo2',el).onclick=()=>{S.authed=false;closeSheet()}});
+}
+function topbar(title,sub,extra=''){return `<div class="top"><div class="t"><span class="eyebrow">${sub}</span><h1>${title}</h1></div><div class="r">${extra}${instStatus()}<span class="demo-flag">${ic('info')}${tr('演示数据','Demo data')}</span>${langBtn()}</div></div>`}
+
+function openSheet(html,onMount){$('#sheet').innerHTML=html;$('#overlay').hidden=false;if(onMount)onMount($('#sheet'));const f=$('#sheet').querySelector('button,a,input');if(f)f.focus()}
+function closeSheet(){$('#overlay').hidden=true;$('#sheet').innerHTML=''}
+$('#overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeSheet()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#overlay').hidden)closeSheet()});
+
+/* passkey ceremony (simulated in this prototype) */
+function passkey({title,body='',ok,onDone}){
+  openSheet(`<h2 id="sheet-title">${title||tr('使用 passkey 确认','Confirm with passkey')}</h2>${body}<div class="pk" id="pk"><svg viewBox="0 0 90 90" aria-hidden="true"><circle class="ring" cx="45" cy="45" r="40"/><circle class="arc" cx="45" cy="45" r="40"/>
+   <path class="face" d="M33 38v3M57 38v3M45 40v8h-3M36 56c5 4 13 4 18 0"/></svg><b id="pk-t">${tr('等待设备确认…','Waiting for your device…')}</b><span class="muted small" id="pk-s">${tr('请在你的设备上完成 Face ID、指纹或 Windows Hello。','Use Face ID, fingerprint or Windows Hello on your device.')}</span>
+   <span class="pill warn">${tr('原型中为模拟过程','Simulated in this prototype')}</span></div>
+   <div class="row" style="justify-content:flex-end"><button class="btn" id="pk-cancel">${tr('取消','Cancel')}</button></div>`,el=>{
+    let done=false;const t=setTimeout(()=>{done=true;$('#pk',el).classList.add('done');$('#pk-t',el).textContent=ok||tr('已确认','Confirmed');
+      $('#pk-s',el).textContent=tr('签名只在你的设备上生成,我们的网站拿不到私钥。','The signature is created on your device. Our website never sees the private key.');
+      $('#pk-cancel',el).textContent=tr('完成','Done');setTimeout(()=>{if(!$('#overlay').hidden&&$('#pk',el))closeSheet();onDone&&onDone()},900)},1500);
+    $('#pk-cancel',el).onclick=()=>{clearTimeout(t);closeSheet();if(!done)toast(tr('已取消,未做任何修改','Cancelled. Nothing was changed.'))}});
+}
+
+/* charts */
+function mkChart(canvas,cfg){if(typeof Chart==='undefined'){canvas.parentElement.innerHTML=`<div class="fallback">${tr('图表库未能加载','Chart library failed to load')}</div>`;return null}
+  const T=themeColors();Chart.defaults.color=T.muted;Chart.defaults.borderColor=T.line;Chart.defaults.font.family="'IBM Plex Mono', ui-monospace, monospace";Chart.defaults.font.size=11;
+  const c=new Chart(canvas,cfg);charts.push(c);return c}
+function baseOpts(T,yfmt){return{responsive:true,maintainAspectRatio:false,animation:{duration:400},interaction:{mode:'index',intersect:false},
+  plugins:{legend:{display:false},tooltip:{backgroundColor:T.ink,titleColor:T.bg,bodyColor:T.bg,padding:10,displayColors:false,callbacks:yfmt?{label:c=>yfmt(c.parsed.y)}:{}}},
+  scales:{x:{grid:{display:false},ticks:{maxTicksLimit:6,maxRotation:0}},y:{grid:{color:T.line},border:{display:false},ticks:{maxTicksLimit:5,callback:yfmt||(v=>v)}}}}}
+
+/* ============ indicators + preview simulation ============ */
+function ema(a,p){const k=2/(p+1),o=[];let e=a[0];for(let i=0;i<a.length;i++){e=i?a[i]*k+e*(1-k):a[0];o.push(e)}return o}
+function wilderAtr(b,p){const o=new Array(b.length).fill(NaN);let s=0;for(let i=1;i<b.length;i++){const t=Math.max(b[i].h-b[i].l,Math.abs(b[i].h-b[i-1].c),Math.abs(b[i].l-b[i-1].c));if(i<=p){s+=t;if(i===p)o[i]=s/p}else o[i]=(o[i-1]*(p-1)+t)/p}return o}
+function adx(b,p){const n=b.length,o=new Array(n).fill(0);let tr_=0,pd=0,md=0,ad=0;const dx=[];
+  for(let i=1;i<n;i++){const up=b[i].h-b[i-1].h,dn=b[i-1].l-b[i].l,P=up>dn&&up>0?up:0,M=dn>up&&dn>0?dn:0,t=Math.max(b[i].h-b[i].l,Math.abs(b[i].h-b[i-1].c),Math.abs(b[i].l-b[i-1].c));
+    if(i<=p){tr_+=t;pd+=P;md+=M}else{tr_=tr_-tr_/p+t;pd=pd-pd/p+P;md=md-md/p+M}
+    if(i>=p&&tr_>0){const pi=100*pd/tr_,mi=100*md/tr_,x=pi+mi?100*Math.abs(pi-mi)/(pi+mi):0;if(dx.length<p){dx.push(x);ad=dx.reduce((a,c)=>a+c,0)/dx.length}else ad=(ad*(p-1)+x)/p;o[i]=ad}}return o}
+function boll(a,p,k){const up=[],lo=[],mid=[];for(let i=0;i<a.length;i++){if(i<p-1){up.push(NaN);lo.push(NaN);mid.push(NaN);continue}let s=0;for(let j=i-p+1;j<=i;j++)s+=a[j];const m=s/p;let v=0;for(let j=i-p+1;j<=i;j++)v+=(a[j]-m)**2;const sd=Math.sqrt(v/p);mid.push(m);up.push(m+k*sd);lo.push(m-k*sd)}return{up,lo,mid}}
+function rsi(a,p){const o=new Array(a.length).fill(50);let g=0,l=0;for(let i=1;i<a.length;i++){const d=a[i]-a[i-1],G=Math.max(d,0),L=Math.max(-d,0);if(i<=p){g+=G;l+=L;if(i===p){g/=p;l/=p}}else{g=(g*(p-1)+G)/p;l=(l*(p-1)+L)/p}if(i>=p)o[i]=l===0?100:100-100/(1+g/l)}return o}
+
+function simulate(st,bars){
+  const n=bars.length,c=bars.map(b=>b.c),sg=st.signals,f=st.filters,e=ema(c,sg.trend.ema),atr=wilderAtr(bars,14);
+  const ad=f.adx.on?adx(bars,f.adx.period):null,bb=sg.mr.on?boll(c,sg.mr.period,sg.mr.k):null;
+  const ef=sg.cross.on?ema(c,sg.cross.fast):null,es=sg.cross.on?ema(c,sg.cross.slow):null,rs=sg.rsi.on?rsi(c,sg.rsi.period):null;
+  const rb=sg.orb.rangeMin*4,wb=sg.orb.window*4;let rh=-Infinity,rl=Infinity;for(let i=0;i<Math.min(rb,n);i++){rh=Math.max(rh,bars[i].h);rl=Math.min(rl,bars[i].l)}
+  const orbOk=sg.orb.on&&rh-rl>=sg.orb.minRange;let orbDone=false,mrCount=0,opened=0;
+  const markers=[],exits=[];let pos=null,cool=-1,raw=0,trades=0,wins=0;const lastBy={};
+  const side=(i,d)=>d>0?c[i]>e[i]&&c[i]-e[i]>=sg.trend.dist:c[i]<e[i]&&e[i]-c[i]>=sg.trend.dist;
+  const streak=(i,d)=>{for(let j=i-sg.trend.bars+1;j<=i;j++){if(j<0||!side(j,d))return false}return true};
+  for(let i=30;i<n;i++){
+    const b=bars[i];
+    if(pos){let hit=0,px=0;if(pos.d>0){if(b.l<=pos.sl){hit=-1;px=pos.sl}else if(b.h>=pos.tp){hit=1;px=pos.tp}}else{if(b.h>=pos.sl){hit=-1;px=pos.sl}else if(b.l<=pos.tp){hit=1;px=pos.tp}}
+      if(!hit&&st.exit.time.on&&(i-pos.i)>=st.exit.time.min*4){hit=(c[i]-pos.px)*pos.d>0?1:-1;px=c[i]}
+      if(hit){exits.push({i,p:px,w:hit>0});trades++;if(hit>0)wins++;
+        if(hit<0&&f.cooldown.on){const tre=ad?ad[i]>=f.adx.th:true;cool=i+(tre?f.cooldown.trend:f.cooldown.chop)*4}pos=null;continue}}
+    const trending=ad?ad[i]>=f.adx.th:true,choppy=ad?ad[i]<f.adx.th:true,cand={},body=Math.abs(b.c-b.o);
+    if(sg.trend.on&&trending){for(const d of[1,-1])if(streak(i,d)&&!streak(i-1,d))cand.trend=d}
+    if(sg.breakout.on&&trending&&i>sg.breakout.look){let hh=-Infinity,ll=Infinity;for(let j=i-sg.breakout.look;j<i;j++){hh=Math.max(hh,bars[j].h);ll=Math.min(ll,bars[j].l)}
+      if(b.c>hh&&b.c>b.o&&body>=sg.breakout.body&&b.c-e[i]>=sg.breakout.dist)cand.breakout=1;else if(b.c<ll&&b.c<b.o&&body>=sg.breakout.body&&e[i]-b.c>=sg.breakout.dist)cand.breakout=-1}
+    if(orbOk&&!orbDone&&i>=rb&&i<rb+wb){if(b.c>rh&&body>=sg.orb.body)cand.orb=1;else if(b.c<rl&&body>=sg.orb.body)cand.orb=-1}
+    if(bb&&choppy&&i>=sg.mr.warm&&mrCount<sg.mr.maxPer&&isFinite(bb.lo[i-1])){if(c[i-1]<bb.lo[i-1]&&c[i]>bb.lo[i])cand.mr=1;else if(c[i-1]>bb.up[i-1]&&c[i]<bb.up[i])cand.mr=-1}
+    if(ef){if(ef[i-1]<=es[i-1]&&ef[i]>es[i])cand.cross=1;else if(ef[i-1]>=es[i-1]&&ef[i]<es[i])cand.cross=-1}
+    if(rs){if(rs[i-1]<sg.rsi.lo&&rs[i]>=sg.rsi.lo)cand.rsi=1;else if(rs[i-1]>sg.rsi.hi&&rs[i]<=sg.rsi.hi)cand.rsi=-1}
+    const keys=Object.keys(cand);raw+=keys.length;
+    if(!pos&&i>=cool&&keys.length&&!(f.cap.on&&opened>=f.cap.max)){
+      const pk=st.priority.find(k=>cand[k]!==undefined);if(!pk)continue;
+      if(f.gap.on&&lastBy[pk]!==undefined&&(i-lastBy[pk])*15<f.gap.sec)continue;
+      const d=cand[pk],a=isFinite(atr[i])?atr[i]:8;
+      const sd=pk==='mr'?25:st.exit.mode==='atr'?st.exit.atrStop*a*4:st.exit.stop;
+      const td=pk==='mr'&&bb?Math.max(Math.abs(bb.mid[i]-b.c),6):st.exit.mode==='atr'?st.exit.atrTarget*a*4:st.exit.target;
+      pos={d,i,px:b.c,sl:b.c-d*sd,tp:b.c+d*td};markers.push({i,d,k:pk});lastBy[pk]=i;opened++;if(pk==='orb')orbDone=true;if(pk==='mr')mrCount++;
+    }
+  }
+  return{markers,exits,raw,trades,wins,open:pos,e,bb,rb,wb,rh,rl,orbOk,n}
+}
+function niceStep(x){const p=Math.pow(10,Math.floor(Math.log10(x))),f=x/p;return(f<1.5?1:f<3?2:f<7?5:10)*p}
+function drawPreview(cv,bars,sim,st){
+  const dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;if(!w||!h)return;cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
+  const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);const T=themeColors();
+  const pl=6,pr=62,pt=14,pb=24,n=bars.length;let lo=Infinity,hi=-Infinity;for(const b of bars){lo=Math.min(lo,b.l);hi=Math.max(hi,b.h)}
+  if(sim.bb)for(let i=0;i<n;i++)if(isFinite(sim.bb.up[i])){hi=Math.max(hi,sim.bb.up[i]);lo=Math.min(lo,sim.bb.lo[i])}
+  lo-=8;hi+=8;const X=i=>pl+(i+.5)*(w-pl-pr)/n,Y=v=>pt+(hi-v)/(hi-lo)*(h-pt-pb);
+  g.font="11px 'IBM Plex Mono', ui-monospace, monospace";g.textBaseline='middle';
+  const step=niceStep((hi-lo)/4);for(let v=Math.ceil(lo/step)*step;v<=hi;v+=step){g.strokeStyle=T.line;g.lineWidth=1;g.beginPath();g.moveTo(pl,Math.round(Y(v))+.5);g.lineTo(w-pr,Math.round(Y(v))+.5);g.stroke();g.fillStyle=T.muted;g.fillText(fmtNum(v),w-pr+8,Y(v))}
+  g.textBaseline='alphabetic';for(let i=0;i<n;i+=40){const mm=570+i/4;g.fillStyle=T.muted;g.fillText(`${String(Math.floor(mm/60)).padStart(2,'0')}:${String(mm%60).padStart(2,'0')}`,X(i)-14,h-6)}
+  if(st.signals.orb.on){g.fillStyle=rgba(T.accent,.10);g.fillRect(X(0),Y(sim.rh),X(Math.min(sim.rb,n-1))-X(0),Y(sim.rl)-Y(sim.rh));g.setLineDash([4,4]);g.strokeStyle=rgba(T.accent,.7);
+    for(const v of[sim.rh,sim.rl]){g.beginPath();g.moveTo(X(0),Y(v));g.lineTo(X(Math.min(sim.rb+sim.wb,n-1)),Y(v));g.stroke()}g.setLineDash([]);
+    g.fillStyle=T.accent;g.fillText(sim.orbOk?tr('开盘区间','Opening range'):tr('区间过窄,今日不触发','Range too narrow, no entry today'),X(2),Y(sim.rh)-5)}
+  if(sim.bb){g.fillStyle=rgba(T.info,.08);g.beginPath();let s=false;for(let i=0;i<n;i++){if(!isFinite(sim.bb.up[i]))continue;if(s)g.lineTo(X(i),Y(sim.bb.up[i]));else{g.moveTo(X(i),Y(sim.bb.up[i]));s=true}}for(let i=n-1;i>=0;i--){if(isFinite(sim.bb.lo[i]))g.lineTo(X(i),Y(sim.bb.lo[i]))}g.closePath();g.fill()}
+  const cw=Math.max(1,Math.floor((w-pl-pr)/n*.62));
+  for(let i=0;i<n;i++){const b=bars[i],up=b.c>=b.o;g.strokeStyle=g.fillStyle=up?T.gain:T.loss;g.lineWidth=1;g.beginPath();g.moveTo(Math.round(X(i))+.5,Y(b.h));g.lineTo(Math.round(X(i))+.5,Y(b.l));g.stroke();
+    const y1=Y(Math.max(b.o,b.c)),y2=Y(Math.min(b.o,b.c));g.fillRect(Math.round(X(i)-cw/2),y1,cw,Math.max(1,y2-y1))}
+  g.strokeStyle=T.accent;g.lineWidth=1.6;g.beginPath();sim.e.forEach((v,i)=>i?g.lineTo(X(i),Y(v)):g.moveTo(X(i),Y(v)));g.stroke();
+  g.font="600 10px 'IBM Plex Mono', ui-monospace, monospace";g.textAlign='center';
+  for(const m of sim.markers){const b=bars[m.i],x=X(m.i),y=m.d>0?Y(b.l)+10:Y(b.h)-10;g.fillStyle=m.d>0?T.gain:T.loss;g.beginPath();
+    if(m.d>0){g.moveTo(x,y-5);g.lineTo(x-5,y+4);g.lineTo(x+5,y+4)}else{g.moveTo(x,y+5);g.lineTo(x-5,y-4);g.lineTo(x+5,y-4)}g.closePath();g.fill();
+    g.fillStyle=T.ink;g.fillText(SIG[m.k].k,x,m.d>0?y+15:y-8)}
+  for(const x of sim.exits){g.strokeStyle=x.w?T.gain:T.loss;g.lineWidth=2;g.beginPath();g.arc(X(x.i),Y(x.p),4,0,Math.PI*2);g.stroke()}
+  g.textAlign='left';
+}
+
+/* checks for the strategy spec */
+const enabledSignals=st=>Object.keys(st.signals).filter(k=>st.signals[k].on);
+function checks(st,sim){
+  const L=[],x=st.exit,sg=enabledSignals(st);
+  if(!sg.length)L.push(['bad',tr('至少启用一个入场信号。','Turn on at least one entry signal.')]);
+  if(x.mode==='points'){const be=x.stop/(x.stop+x.target),be2=(x.stop+1)/(x.stop+x.target);
+    L.push(['info',tr(`保本胜率约 ${fmtPct(be)};计入 1 点点差后约 ${fmtPct(be2)}。胜率长期低于这个数,策略就会亏损。`,`Break-even win rate is about ${fmtPct(be)}, or ${fmtPct(be2)} after a 1-point spread. A lower win rate over time means losses.`)]);
+    if(x.stop<4)L.push(['bad',tr('止损小于券商的最小止损距离(示例 4 点,实际以你账户查询为准)。','Stop is below the broker minimum stop distance (4 pts in this example; your account sets the real value).')]);
+    if(x.target/x.stop<.8)L.push(['warn',tr('止盈明显小于止损,需要很高的胜率才能保本。','Target is much smaller than the stop, so you need a very high win rate to break even.')])}
+  else L.push(['info',tr('止损止盈按 ATR 倍数计算,会随波动率自动放大或缩小。','Stop and target follow ATR, so they widen and narrow with volatility.')]);
+  const cnt=sg.length+Object.values(st.filters).filter(f=>f.on).length;
+  L.push(cnt>7?['warn',tr(`当前启用了 ${cnt} 个积木。条件越多,越容易只适合过去的行情。`,`${cnt} blocks are on. More conditions make it easier to fit only past markets.`)]:['ok',tr(`启用了 ${cnt} 个积木,在建议的 7 个以内。`,`${cnt} blocks on, within the suggested 7.`)]);
+  const perDay=Math.round(sim.raw*(1560/sim.n));
+  L.push(perDay>40?['warn',tr(`按预览估算,每天约产生 ${perDay} 次原始信号,交易成本和误触发会偏高。`,`The preview suggests about ${perDay} raw signals a day, which means higher costs and more false triggers.`)]:['ok',tr(`按预览估算,每天约产生 ${perDay} 次原始信号。`,`The preview suggests about ${perDay} raw signals a day.`)]);
+  if(st.signals.mr.on&&!st.filters.adx.on)L.push(['warn',tr('均值回归在单边行情里会逆势亏损,建议同时启用"趋势 / 震荡切换"。','Mean reversion loses against strong trends. Turn on the trend / range switch as well.')]);
+  if(st.signals.cross.on&&st.signals.cross.fast>=st.signals.cross.slow)L.push(['bad',tr('均线交叉的快线周期必须小于慢线周期。','The fast MA period must be shorter than the slow MA period.')]);
+  if(st.signals.rsi.on&&st.signals.rsi.lo>=st.signals.rsi.hi)L.push(['bad',tr('RSI 超卖线必须低于超买线。','The oversold level must be below the overbought level.')]);
+  if(st.signals.breakout.on&&!st.filters.cooldown.on)L.push(['warn',tr('动量突破未设置亏损后冷却,连续止损时可能密集入场。','Breakout has no cooldown after a loss, so it can re-enter quickly after repeated stops.')]);
+  L.push(['ok',tr('"斜率确认"与"连续同侧"在数学上重复,已合并,不再单独提供。','"Slope confirmation" duplicates "bars on the same side" mathematically, so it is merged and not offered separately.')]);
+  return L;
+}
+const hasBad=L=>L.some(l=>l[0]==='bad');
+function flatten(o,p='',out={}){for(const k of Object.keys(o)){const v=o[k],q=p?p+'.'+k:k;if(v&&typeof v==='object'&&!Array.isArray(v))flatten(v,q,out);else out[q]=Array.isArray(v)?v.join(' > '):v}return out}
+function labelOf(path){if(PARAMS[path])return pick(PARAMS[path].l);const blk=[...BLOCKS.signals,...BLOCKS.filters].find(b=>path===b[0]+'.on');if(blk)return pick(blk[1]);
+  return pick({'exit.time.on':['时间止损','Time stop'],'exit.mode':['止损止盈方式','Stop and target mode'],'bar':['主 K 线周期','Main bar size'],'priority':['信号优先级','Signal priority']}[path]||[path,path])}
+function fmtVal(v){if(v===true)return tr('开','on');if(v===false)return tr('关','off');if(v==='points')return tr('固定点数','fixed points');if(v==='atr')return tr('ATR 倍数','ATR multiple');
+  if(typeof v==='string')return v.replace(/orb|breakout|trend|mr|cross|rsi/g,k=>SIG[k]?sigName(k):k);return String(v)}
+function diffList(a,b){const A=flatten(a),B=flatten(b),out=[];for(const k of Object.keys(B))if(String(A[k])!==String(B[k]))out.push({k,from:A[k],to:B[k]});return out}
+function genPython(st,ver){
+  const on=st.priority.filter(k=>st.signals[k].on),L=[],obj=s=>Object.keys(s).filter(x=>x!=='on').map(x=>`"${x}": ${s[x]}`).join(', ');
+  L.push(`# Generated by ExBot! · strategy spec v${ver} · do not edit by hand`,'# This module only emits signals. Orders, stops and risk limits are enforced by the fixed runtime on your server.','from exbot_runtime.blocks import ctx_api, Signal','',`BAR = "${st.bar}"`,'PARAMS = {');
+  for(const k of on)L.push(`    "${k}": {${obj(st.signals[k])}},`);
+  for(const k of Object.keys(st.filters))if(st.filters[k].on)L.push(`    "${k}": {${obj(st.filters[k])}},`);
+  L.push(`    "exit": {"mode": "${st.exit.mode}", ${st.exit.mode==='points'?`"stop": ${st.exit.stop}, "target": ${st.exit.target}`:`"atr_stop": ${st.exit.atrStop}, "atr_target": ${st.exit.atrTarget}`}},`,'}','','@ctx_api(read_only=True)','def on_bar(ctx):','    """Called once per closed bar. Can only read closed bars."""');
+  L.push(st.filters.adx.on?`    trending = ctx.adx(${st.filters.adx.period}) >= ${st.filters.adx.th}`:'    trending = True');
+  for(const k of on){const gate=k==='mr'?'not trending and ':['trend','breakout'].includes(k)?'trending and ':'';L.push(`    if ${gate}ctx.block("${k}").fires(**PARAMS["${k}"]):`,`        return Signal.from_block("${k}")`)}
+  L.push('    return Signal.FLAT');return L.join('\n');
+}
+
+/* ============ first-run UI tour ============ */
+let COACH=null;
+const COACH_STEPS=[
+ {sel:['#railnav','#tabbar'],t:['导航','Navigation'],b:s=>s==='#railnav'
+   ?tr('左侧是全部功能:总览、策略配置、风控与停止、报表、版本与签名、安全中心。下方分组是开户引导和运营后台。','Everything lives on the left: overview, strategy, risk and stop, reports, versions and security. Onboarding and the admin console sit in the lower group.')
+   :tr('底部是最常用的四个页面。其余页面在"更多"里。','The four pages you use most are at the bottom. The rest are under "More".')},
+ {sel:['#tour-card'],t:['演示导览','Guided tour'],b:()=>tr('按客户实际会走的顺序,逐个打开注册、开户、策略配置等页面。看完可以收起,随时能再打开这个界面导览。','Opens each page in the order a client goes through. Hide it when you are done; this UI tour stays one click away.')},
+ {sel:['.top .r'],t:['状态栏','Status bar'],b:()=>tr('显示你的服务器是否在正常运行(每 30 秒报到一次)。"演示数据"提醒你这里的数字都是示例。最右边可以切换中英文。','Shows whether your server is running; it checks in every 30 seconds. "Demo data" marks every number as a sample. The last button switches language.')},
+ {sel:['#dash-kpis'],t:['关键数字','Key numbers'],b:()=>tr('今日盈亏、本月盈亏、当前持仓和今日亏损额度。额度用完后,当天不再开新仓。','Today, month to date, the open position and how much of today’s loss limit is used. At the limit no new trades open that day.')},
+ {sel:['#dash-eq'],t:['账户净值','Account equity'],b:()=>tr('净值曲线。成交少于 300 笔时,页面会提醒统计上还不足以判断策略好坏。','The equity curve. Under 300 trades, the page reminds you that results cannot yet show whether a strategy works.')},
+ {sel:['#dash-status'],t:['运行状态','Status'],b:()=>tr('服务器位置、券商连接、美股时段(自动换算成悉尼时间)、收盘强平规则,以及等待生效的修改。','Server location, broker connection, the US session in Sydney time, the close-out rule, and changes waiting to take effect.')},
+ {sel:['#dash-trades'],t:['最近成交','Recent trades'],b:()=>tr('每笔成交都标明由哪个信号触发、为什么平仓。','Each trade shows which signal opened it and why it closed.')},
+ {sel:['#railfoot .inst','#moreBtn'],t:['你的服务器','Your server'],b:s=>s==='#moreBtn'
+   ?tr('"更多"里有版本与签名、安全中心、开户引导和运营后台。','"More" holds versions, security, onboarding and the admin console.')
+   :tr('这台服务器在你自己的 AWS 账户里。我们只能看到它上报的摘要,无法登录它。','This server runs in your own AWS account. We only see the summary it reports and cannot sign in to it.')},
+ {sel:['#railnav a[href="#strategy"]','#tabbar a[href="#strategy"]'],t:['下一步:配置策略','Next: build a strategy'],
+   b:()=>tr('用积木组合规则、调参数,实时看到规则在行情上的触发位置,然后用 passkey 签名提交。','Combine rule blocks, tune parameters, see where the rules fire on prices, then sign with your passkey.')}
+];
+function coachSeen(){if(S.coachSeen)return true;try{return localStorage.getItem('exbot-coach')==='1'}catch(e){return false}}
+function markCoach(){S.coachSeen=true;try{localStorage.setItem('exbot-coach','1')}catch(e){}}
+const isVisible=n=>{if(!n)return false;const r=n.getBoundingClientRect();return r.width>0&&r.height>0};
+function startCoach(){
+  if(route()!=='dash'){S.authed=true;go('dash');setTimeout(startCoach,350);return}
+  if(COACH)endCoach();
+  const el=document.createElement('div');el.className='coach';el.innerHTML='<div class="hole"></div><div class="tip" role="dialog" aria-modal="true" aria-labelledby="coach-t"></div>';
+  document.body.appendChild(el);COACH={el,i:0,tg:null};showCoach();
+  window.addEventListener('resize',placeCoach);window.addEventListener('scroll',placeCoach,true);document.addEventListener('keydown',coachKeys);
+}
+function coachKeys(e){if(!COACH)return;if(e.key==='Escape'){e.preventDefault();endCoach()}else if(e.key==='ArrowRight')coachMove(1);else if(e.key==='ArrowLeft')coachMove(-1)}
+function coachMove(d){if(!COACH)return;const j=COACH.i+d;if(j<0)return;if(j>=COACH_STEPS.length){endCoach();return}COACH.i=j;showCoach(d)}
+function showCoach(dir=1){
+  if(!COACH)return;const st=COACH_STEPS[COACH.i];let tg=null;
+  for(const s of st.sel){const n=document.querySelector(s);if(isVisible(n)){tg={n,s};break}}
+  if(!tg){const j=COACH.i+(dir<0?-1:1);if(j<0||j>=COACH_STEPS.length){endCoach();return}COACH.i=j;return showCoach(dir)}
+  COACH.tg=tg;const n=COACH_STEPS.length,i=COACH.i,last=i===n-1,tip=COACH.el.querySelector('.tip');
+  if(!tg.n.closest('.tabbar,.rail'))tg.n.scrollIntoView({block:'center',behavior:'auto'});
+  tip.innerHTML=`<div class="row" style="justify-content:space-between"><span class="eyebrow">${tr('界面导览','UI tour')} · ${i+1}/${n}</span><button class="btn ghost sm" data-c="skip">${tr('跳过','Skip')}</button></div>
+   <h3 id="coach-t">${pick(st.t)}</h3><p>${st.b(tg.s)}</p>
+   <div class="ctrl"><div class="dots" aria-hidden="true">${COACH_STEPS.map((_,k)=>`<i class="${k===i?'on':''}"></i>`).join('')}</div>
+   <div class="row"><button class="btn sm" data-c="prev" ${i===0?'disabled':''}>${tr('上一步','Back')}</button>${last?`<button class="btn sm" data-c="done">${tr('完成','Done')}</button><button class="btn primary sm" data-c="go">${tr('去配置策略','Build a strategy')} ${ic('arrow')}</button>`:`<button class="btn primary sm" data-c="next">${tr('下一步','Next')}</button>`}</div></div>`;
+  tip.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{const c=b.dataset.c;if(c==='next')coachMove(1);else if(c==='prev')coachMove(-1);else if(c==='go'){endCoach();go('strategy')}else endCoach()});
+  placeCoach();const f=tip.querySelector('[data-c="next"],[data-c="go"]');if(f)f.focus({preventScroll:true});
+}
+function placeCoach(){
+  if(!COACH||!COACH.tg)return;const r=COACH.tg.n.getBoundingClientRect(),pad=6,hole=COACH.el.querySelector('.hole'),tip=COACH.el.querySelector('.tip');
+  const vw=window.innerWidth,vh=window.innerHeight;
+  Object.assign(hole.style,{left:(r.left-pad)+'px',top:(r.top-pad)+'px',width:(r.width+pad*2)+'px',height:(r.height+pad*2)+'px'});
+  const th=tip.offsetHeight,tw=tip.offsetWidth;let top,left;
+  const below=r.bottom+pad+12,above=r.top-pad-12-th;
+  if(below+th<=vh-12){top=below;left=Math.min(Math.max(12,r.left),vw-tw-12)}
+  else if(above>=12){top=above;left=Math.min(Math.max(12,r.left),vw-tw-12)}
+  else if(r.right+16+tw<=vw-12){left=r.right+16;top=Math.min(Math.max(12,r.top),vh-th-12)}
+  else{left=Math.max(12,(vw-tw)/2);top=Math.max(12,vh-th-12)}
+  Object.assign(tip.style,{left:left+'px',top:top+'px'});
+}
+function endCoach(){if(!COACH)return;COACH.el.remove();window.removeEventListener('resize',placeCoach);window.removeEventListener('scroll',placeCoach,true);document.removeEventListener('keydown',coachKeys);COACH=null;markCoach()}
+
+/* ============ views ============ */
+const VIEWS={};
+
+VIEWS.home={html:()=>{const s=stats(TRADES);return `<div class="auth">
+  <div class="brandrow"><span class="brand">${LOGO}</span><div class="row"><span class="demo-flag">${ic('info')}${tr('原型 · 演示数据','Prototype · demo data')}</span>${langBtn()}<a class="btn sm" href="#login">${tr('登录','Sign in')}</a></div></div>
+  <section class="hero">
+    <div class="stack" style="gap:18px">
+      <span class="eyebrow">${tr('给已有投资经验、不想自己写代码的人','For experienced investors who do not want to write code')}</span>
+      <h1 class="display">${tr('把你的交易规则,交给一个不会紧张的执行者。','Hand your trading rules to an executor that never gets nervous.')}</h1>
+      <p class="lead">${tr('在可视化界面里组合策略、设定风控。机器人运行在<strong>你自己的云服务器</strong>上,通过<strong>你自己的 IG 账户</strong>按规则下单。每一次修改,都需要你本人确认。','Build your strategy and risk limits in a visual editor. The bot runs on <strong>your own cloud server</strong> and trades through <strong>your own IG account</strong>. Every change needs your personal confirmation.')}</p>
+      <div class="row"><a class="btn primary" href="#signup">${tr('创建账户','Create account')} ${ic('arrow')}</a><a class="btn" href="#dash" id="to-demo">${tr('直接看演示控制台','Open the demo console')}</a></div>
+    </div>
+    <div class="hero-panel" aria-label="${tr('控制台示意','Console preview')}">
+      <div class="row" style="justify-content:space-between"><b>${tr('今天的执行情况','Today')}</b><span class="pill ok"><span class="dot live"></span>${tr('运行中','Running')}</span></div>
+      <div class="grid cols-2" style="gap:10px"><div class="kpi"><span class="s">${tr('规则触发','Rule triggers')}</span><span class="v">7</span></div><div class="kpi"><span class="s">${tr('实际开仓','Trades opened')}</span><span class="v">2</span></div></div>
+      <div class="note ok">${ic('check')}<span>${tr('两次信号因"亏损后冷却"被跳过。规则写好了,就不会因为想回本而追单。','Two signals were skipped by the cooldown after a loss. With the rule set, the bot does not chase to win it back.')}</span></div>
+      <div class="note">${ic('shield')}<span>${tr('日内亏损额度已用 31%,达到上限后当天不再开新仓。','31% of today’s loss limit is used. At the limit, no new trades open today.')}</span></div>
+    </div>
+  </section>
+  <section class="grid cols-3 feature">
+    <div class="card stack">${ic('bolt','lg')}<h3>${tr('规则执行','Rules, not moods')}</h3><p class="muted">${tr('入场、止损、止盈、冷却都由规则决定。收盘前自动平仓,不留隔夜仓。','Entries, stops, targets and cooldowns follow your rules. Positions close before the market closes, with no overnight risk.')}</p></div>
+    <div class="card stack">${ic('lock','lg')}<h3>${tr('凭证始终在你手里','Your credentials stay with you')}</h3><p class="muted">${tr('IG 账号和 API Key 由你亲手输入到你自己的服务器,我们的网站和数据库从不经手。','You type your IG login and API key into your own server. Our website and database never handle them.')}</p></div>
+    <div class="card stack">${ic('key','lg')}<h3>${tr('每次修改都要你确认','You approve every change')}</h3><p class="muted">${tr('策略变更需要你用 Face ID 或指纹签名,服务器逐条验证,并在下一个交易日才生效。','Strategy changes are signed with your Face ID or fingerprint, checked by your server, and take effect on the next trading day.')}</p></div>
+  </section>
+  <section class="card"><div class="card-h"><h2>${tr('开通流程','How you get started')}</h2><span class="muted small">${tr('我们一对一协助完成开户和服务器搭建','We help you open your account and set up your server, one to one')}</span></div>
+    <ol class="steps"><li><b>${tr('在 IG 开户','Open an IG account')}</b><span class="muted small">${tr('完成身份验证,生成你自己的 API Key。','Verify your identity and create your own API key.')}</span></li>
+    <li><b>${tr('启动你的云服务器','Launch your cloud server')}</b><span class="muted small">${tr('在你自己的 AWS 账户里点一次启动模板,约 10 分钟。','One launch template in your own AWS account, about 10 minutes.')}</span></li>
+    <li><b>${tr('组合策略并确认','Build and approve a strategy')}</b><span class="muted small">${tr('选积木、调参数,用 passkey 签名提交。','Pick blocks, tune parameters, sign with your passkey.')}</span></li>
+    <li><b>${tr('自动执行与复盘','Run and review')}</b><span class="muted small">${tr('随时查看报表,或一键停止交易。','Check reports any time, or stop trading in one tap.')}</span></li></ol></section>
+  <p class="fine">${tr(`本平台提供软件工具与实施服务,不提供投资建议,不承诺任何收益。差价合约(CFD)是高风险杠杆产品,你可能损失全部本金。页面中所有数字均为演示数据(例如示例数据中的 ${s.n} 笔成交),不代表任何策略的真实或预期表现。`,`ExBot! provides software and setup services. It does not give investment advice or promise any return. CFDs are high-risk leveraged products and you can lose all of your money. Every figure on these pages is demo data (for example the ${s.n} sample trades) and does not represent real or expected results of any strategy.`)}</p>
+</div>`},
+ mount(){$('#to-demo').onclick=()=>{S.authed=true}}};
+
+VIEWS.signup={html:()=>`<div class="auth narrow">
+  <div class="brandrow"><span class="brand">${LOGO}</span>${langBtn()}</div>
+  <div class="stack"><span class="eyebrow">${tr('第 1 步,共 3 步','Step 1 of 3')}</span><h1>${tr('创建账户','Create your account')}</h1><p class="muted">${tr('接下来会验证你的邮箱,并设置用于登录和确认修改的 passkey。','Next you will verify your email and set up the passkey you use to sign in and approve changes.')}</p></div>
+  <form class="stack" id="f-signup" novalidate>
+    <div class="field"><label for="su-name">${tr('姓名','Full name')}</label><input class="input" id="su-name" autocomplete="name" value="${tr('演示客户','Demo Client')}" required></div>
+    <div class="field"><label for="su-email">${tr('邮箱','Email')}</label><input class="input" id="su-email" type="email" autocomplete="email" value="demo.client@example.com" required></div>
+    <div class="field"><label for="su-phone">${tr('手机(用于安全提醒)','Mobile (for security alerts)')}</label><input class="input" id="su-phone" type="tel" autocomplete="tel" value="+61 4"></div>
+    <div class="field"><label for="su-pw">${tr('密码','Password')}</label><input class="input" id="su-pw" type="password" autocomplete="new-password" placeholder="${tr('至少 12 位','At least 12 characters')}"><div class="strength" id="su-str"><i></i><i></i><i></i><i></i></div><span class="muted small" id="su-strt">${tr('密码只用于备用登录,日常使用 passkey。','The password is only a backup. Day to day you use your passkey.')}</span></div>
+    <label class="check"><input type="checkbox" id="su-t1"><span>${tr('我已阅读并同意服务条款与隐私说明。','I have read and agree to the Terms of Service and Privacy Notice.')}</span></label>
+    <label class="check"><input type="checkbox" id="su-t2"><span>${tr('我理解本平台不提供投资建议,不承诺收益;CFD 交易可能导致全部本金损失。','I understand ExBot! gives no investment advice and promises no return, and that CFD trading can lose all of my money.')}</span></label>
+    <p class="small loss" id="su-err" hidden></p>
+    <button class="btn primary block" type="submit">${tr('下一步:验证邮箱','Next: verify email')}</button>
+    <p class="small muted">${tr('已有账户?','Already have an account?')} <a href="#login">${tr('用 passkey 登录','Sign in with passkey')}</a></p>
+  </form></div>`,
+ mount(){const pw=$('#su-pw');pw.oninput=()=>{const v=pw.value;let s=0;if(v.length>=12)s++;if(/[A-Z]/.test(v)&&/[a-z]/.test(v))s++;if(/\d/.test(v))s++;if(/[^A-Za-z0-9]/.test(v))s++;$('#su-str').className='strength s'+s;
+   $('#su-strt').textContent=pick([['密码只用于备用登录,日常使用 passkey。','The password is only a backup.'],['偏弱:再长一些','Weak: make it longer'],['一般:加入数字或符号','Fair: add numbers or symbols'],['较强','Strong'],['很强','Very strong']][s])};
+  $('#f-signup').onsubmit=e=>{e.preventDefault();const err=$('#su-err'),em=$('#su-email').value.trim(),fail=m=>{err.hidden=false;err.textContent=m};
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em))return fail(tr('邮箱格式不正确,请检查后再试。','That email address is not valid. Check it and try again.'));
+    if(pw.value.length<12)return fail(tr('密码至少需要 12 位。演示中可以输入任意 12 位字符。','The password needs at least 12 characters. Any 12 characters work in this demo.'));
+    if(!$('#su-t1').checked||!$('#su-t2').checked)return fail(tr('请先勾选两项确认。','Tick both boxes to continue.'));
+    S.signupEmail=em;go('verify')}}};
+
+VIEWS.verify={html:()=>`<div class="auth narrow">
+  <div class="brandrow"><span class="brand">${LOGO}</span>${langBtn()}</div>
+  <div class="stack"><span class="eyebrow">${tr('第 2 步,共 3 步','Step 2 of 3')}</span><h1>${tr('验证邮箱','Verify your email')}</h1><p class="muted">${tr(`我们向 <b class="mono">${esc(S.signupEmail||'demo.client@example.com')}</b> 发送了 6 位验证码,10 分钟内有效。`,`We sent a 6-digit code to <b class="mono">${esc(S.signupEmail||'demo.client@example.com')}</b>. It expires in 10 minutes.`)}</p></div>
+  <form class="stack" id="f-otp"><div class="otp" id="otp">${Array.from({length:6},(_,i)=>`<input inputmode="numeric" maxlength="1" id="otp-${i}" aria-label="${tr('第','Digit')} ${i+1}${tr(' 位','')}">`).join('')}</div>
+   <span class="small muted">${tr('演示:输入任意 6 位数字。','Demo: enter any 6 digits.')}</span><p class="small loss" id="otp-err" hidden></p>
+   <button class="btn primary block" type="submit">${tr('验证','Verify')}</button><button class="btn ghost" type="button" id="otp-re">${tr('重新发送验证码','Send a new code')}</button></form></div>`,
+ mount(){const ins=$$('#otp input');ins[0].focus();ins.forEach((el,i)=>{el.oninput=()=>{el.value=el.value.replace(/\D/g,'').slice(0,1);if(el.value&&i<5)ins[i+1].focus()};
+   el.onkeydown=e=>{if(e.key==='Backspace'&&!el.value&&i>0)ins[i-1].focus()};el.onpaste=e=>{const t=(e.clipboardData.getData('text')||'').replace(/\D/g,'').slice(0,6);if(t){e.preventDefault();t.split('').forEach((c,j)=>ins[j].value=c);ins[Math.min(t.length,5)].focus()}}});
+  $('#otp-re').onclick=()=>toast(tr('验证码已重新发送(演示)','A new code was sent (demo)'));
+  $('#f-otp').onsubmit=e=>{e.preventDefault();if(ins.some(x=>!x.value)){const er=$('#otp-err');er.hidden=false;er.textContent=tr('请输入完整的 6 位验证码。','Enter all 6 digits.');return}toast(tr('邮箱已验证','Email verified'));go('passkey')}}};
+
+VIEWS.passkey={html:()=>`<div class="auth narrow">
+  <div class="brandrow"><span class="brand">${LOGO}</span>${langBtn()}</div>
+  <div class="stack"><span class="eyebrow">${tr('第 3 步,共 3 步','Step 3 of 3')}</span><h1>${tr('设置 passkey','Set up your passkey')}</h1><p class="muted">${tr('passkey 用你设备上的 Face ID、指纹或 Windows Hello 代替密码。以后登录、以及每一次确认策略修改,都用它完成。','A passkey uses Face ID, fingerprint or Windows Hello instead of a password. You use it to sign in and to approve every strategy change.')}</p></div>
+  <div class="card flat stack">
+    <div class="check">${ic('check')}<span>${tr('私钥只保存在你的设备(或你的 iCloud / Google 钥匙串)里,我们的服务器拿不到。','The private key stays on your device or in your iCloud / Google keychain. Our servers never get it.')}</span></div>
+    <div class="check">${ic('check')}<span>${tr('别人即使知道你的邮箱和密码,也无法替你修改策略。','Someone who knows your email and password still cannot change your strategy.')}</span></div>
+    <div class="check">${ic('check')}<span>${tr('开启钥匙串同步后,换手机也不会丢失。','With keychain sync on, a new phone keeps your passkey.')}</span></div>
+  </div>
+  <button class="btn primary block" id="pk-make">${ic('key')}${tr('创建 passkey','Create passkey')}</button>
+  <a class="btn ghost" href="#onboard" id="pk-skip">${tr('稍后设置','Set up later')}</a></div>`,
+ mount(){$('#pk-make').onclick=()=>passkey({title:tr('创建 passkey','Create passkey'),ok:tr('passkey 已创建','Passkey created'),onDone:()=>{S.authed=true;S.onboard=0;toast(tr('账户已创建','Account created'));go('onboard')}});$('#pk-skip').onclick=()=>{S.authed=true}}};
+
+VIEWS.login={html:()=>`<div class="auth narrow">
+  <div class="brandrow"><span class="brand">${LOGO}</span>${langBtn()}</div>
+  <div class="stack"><h1>${tr('登录','Sign in')}</h1><p class="muted">${tr('用你注册时创建的 passkey 登录。','Sign in with the passkey you created.')}</p></div>
+  <button class="btn primary block" id="lg-pk">${ic('key')}${tr('使用 passkey 登录','Sign in with passkey')}</button>
+  <details class="card flat"><summary class="small" style="cursor:pointer">${tr('无法使用 passkey?用邮箱、密码和验证码登录','Cannot use your passkey? Sign in with email, password and code')}</summary>
+   <form class="stack" id="f-login" style="margin-top:12px"><div class="field"><label for="lg-email">${tr('邮箱','Email')}</label><input class="input" id="lg-email" type="email" autocomplete="email" value="demo.client@example.com"></div>
+   <div class="field"><label for="lg-pw">${tr('密码','Password')}</label><input class="input" id="lg-pw" type="password" autocomplete="current-password" value="demo-password-123"></div>
+   <div class="field"><label for="lg-code">${tr('邮箱验证码','Email code')}</label><input class="input mono" id="lg-code" inputmode="numeric" placeholder="${tr('6 位数字','6 digits')}"></div>
+   <div class="note warn">${ic('alert')}<span>${tr('用这种方式登录后,仍然需要 passkey 才能确认策略修改。','After signing in this way you still need your passkey to approve strategy changes.')}</span></div>
+   <button class="btn block" type="submit">${tr('登录','Sign in')}</button></form></details>
+  <p class="small muted">${tr('还没有账户?','No account yet?')} <a href="#signup">${tr('创建账户','Create one')}</a> · <a href="#home">${tr('返回首页','Back to home')}</a></p></div>`,
+ mount(){$('#lg-pk').onclick=()=>passkey({title:tr('使用 passkey 登录','Sign in with passkey'),ok:tr('已登录','Signed in'),onDone:()=>{S.authed=true;go('dash')}});
+  $('#f-login').onsubmit=e=>{e.preventDefault();if(!/^\d{6}$/.test($('#lg-code').value.trim())){toast(tr('请输入 6 位验证码(演示:任意 6 位数字)','Enter the 6-digit code (demo: any 6 digits)'));return}S.authed=true;toast(tr('已登录','Signed in'));go('dash')}}};
+
+/* ---------- dashboard ---------- */
+VIEWS.dash={html:()=>{
+  const days=daily(TRADES),m=days.filter(d=>d.date>='2026-09-01'),mPnl=m.reduce((a,d)=>a+d.pnl,0),usedPct=Math.min(1,46/S.risk.daily),recent=TRADES.slice(-7).reverse();
+  const pend=S.riskPending.filter(r=>r.status==='pending').length+S.versions.filter(v=>v.status==='pending').length;
+  const tour=[['home',['注册与邮箱验证','Sign-up and email check']],['onboard',['开户与服务器上线','Onboarding and server launch']],['strategy',['可视化配置策略','Visual strategy editor']],['history',['签名与版本记录','Signatures and versions']],['risk',['风控与一键停止','Risk limits and stop']],['reports',['报表','Reports']],['security',['安全中心','Security']],['ops',['运营后台','Admin console']]];
+  return topbar(tr('早上好,演示客户','Good morning, Demo Client'),tr('总览','Overview')+' · '+fmtIn(Date.now(),'Australia/Sydney',{month:'long',day:'numeric',weekday:'long'}))+
+  (S.tour?`<section class="card" id="tour-card" style="margin-bottom:16px;border-color:color-mix(in srgb,var(--accent) 40%,var(--line))"><div class="card-h"><div class="stack" style="gap:2px"><span class="eyebrow">${tr('演示导览','Guided tour')}</span><h2>${tr('按客户实际会走的顺序看一遍','Walk through it in the order a client would')}</h2></div><div class="row"><button class="btn sm" data-coach>${ic('info')}${tr('界面导览','UI tour')}</button><button class="btn ghost sm" id="tour-x">${ic('x')}${tr('收起','Hide')}</button></div></div>
+   <div class="chips">${tour.map(([id,l],i)=>`<a class="chip" href="#${id}">${i+1} · ${pick(l)}</a>`).join('')}</div></section>`:'')+
+  `<section class="grid cols-4" id="dash-kpis">
+    <div class="card kpi"><span class="s">${tr('今日盈亏(演示)','Today (demo)')}</span><span class="v loss">${fmtAud(-46,true)}</span><span class="s">${tr('2 笔 · 1 止盈 1 止损','2 trades · 1 target, 1 stop')}</span></div>
+    <div class="card kpi"><span class="s">${tr('9 月以来(演示)','Since 1 Sep (demo)')}</span><span class="v ${mPnl>=0?'gain':'loss'}">${fmtAud(mPnl,true)}</span><span class="s">${tr(`${m.length} 个有成交的交易日`,`${m.length} trading days with trades`)}</span></div>
+    <div class="card kpi"><span class="s">${tr('当前持仓','Open position')}</span><span class="v">${tr('多 2 手','Long 2')}</span><span class="s mono">${tr('开仓','Entry')} 29,184.5 · ${tr('浮动','Open P&L')} <span class="gain">+A$37</span></span></div>
+    <div class="card kpi"><span class="s">${tr('今日亏损额度','Daily loss limit used')}</span><span class="v">${fmtPct(usedPct,0)}</span><div class="meter ${usedPct>.7?'warn':''}"><i style="width:${usedPct*100}%"></i></div><span class="s">A$46 / A$${S.risk.daily}${tr(',用完后今天不再开仓',' · no new trades at the limit')}</span></div>
+  </section>
+  <section class="grid cols-2" style="margin-top:16px">
+    <div class="card" id="dash-eq"><div class="card-h"><h2>${tr('账户净值','Account equity')}</h2><span class="pill">${tr('演示账户 · 起始 A$10,000','Demo account · started at A$10,000')}</span></div><div class="chart-box"><canvas id="c-eq" aria-label="${tr('账户净值曲线','Equity curve')}"></canvas></div>
+      <p class="small muted" style="margin-top:8px">${tr(`共 ${TRADES.length} 笔演示成交,少于 300 笔,统计上不足以判断策略好坏。`,`${TRADES.length} demo trades in total. Fewer than 300 trades cannot show whether a strategy works.`)}</p></div>
+    <div class="card stack" id="dash-status"><div class="card-h" style="margin:0"><h2>${tr('运行状态','Status')}</h2><span class="pill acc">${tr('策略','Strategy')} v${S.version}</span></div>
+      <dl class="kv" style="margin:0"><dt>${tr('服务器','Server')}</dt><dd>inst-7f3a · ${tr('AWS 悉尼 · 你的账户','AWS Sydney · your account')}</dd><dt>${tr('最近报到','Last check-in')}</dt><dd>${tr('12 秒前 · 每 30 秒一次','12 s ago · every 30 s')}</dd>
+      <dt>${tr('券商连接','Broker')}</dt><dd>${tr('IG 演示账户 · 行情流正常','IG demo account · price stream OK')}</dd><dt>${tr('美股时段','US session')}</dt><dd>${tr('悉尼时间','Sydney time')} ${sessionInSydney()}</dd>
+      <dt>${tr('收盘强平','Close-out')}</dt><dd>${tr('收盘前 5 分钟自动平仓','Positions close 5 min before the close')}</dd><dt>${tr('待生效变更','Pending changes')}</dt><dd>${pend} · <a href="#history">${tr('查看','View')}</a></dd></dl>
+      <div class="note">${ic('info')}<span>${tr('这里看到的是你的服务器上报的摘要。持仓和成交的原始记录保存在你自己的服务器上。','You are seeing a summary your server reports. The full position and trade records stay on your own server.')}</span></div></div>
+  </section>
+  <section class="card" style="margin-top:16px" id="dash-trades"><div class="card-h"><h2>${tr('最近成交','Recent trades')}</h2><a class="btn ghost sm" href="#reports">${tr('全部报表','All reports')} ${ic('arrow')}</a></div>
+    <div class="table-wrap"><table class="tbl"><thead><tr><th>${tr('悉尼时间','Sydney time')}</th><th>${tr('信号','Signal')}</th><th>${tr('方向','Side')}</th><th class="num">${tr('开仓','Entry')}</th><th class="num">${tr('平仓','Exit')}</th><th>${tr('原因','Reason')}</th><th class="num">${tr('盈亏','P&L')}</th></tr></thead><tbody>
+    ${recent.map(t=>`<tr><td class="mono">${fmtIn(t.ts,'Australia/Sydney',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}</td><td><span class="sig"><i style="background:var(--c${SIG[t.type].c+1})"></i>${sigName(t.type)}</span></td><td>${t.dir>0?tr('做多','Long'):tr('做空','Short')}</td><td class="num">${fmtNum(t.entry,1)}</td><td class="num">${fmtNum(t.exit,1)}</td><td><span class="pill ${t.reason==='tp'?'ok':t.reason==='sl'?'bad':''}">${pick(REASON[t.reason])}</span></td><td class="num ${t.pnl>=0?'gain':'loss'}">${fmtAud(t.pnl,true)}</td></tr>`).join('')}
+    </tbody></table></div></section>`},
+ mount(){const x=$('#tour-x');if(x)x.onclick=()=>{S.tour=false;render()};
+  if(!coachSeen()&&!COACH)setTimeout(()=>{if(route()==='dash'&&!COACH&&$('#overlay').hidden)startCoach()},450);
+  const T=themeColors(),d=daily(TRADES).slice(-30),cv=$('#c-eq'),grad=cv.getContext('2d').createLinearGradient(0,0,0,240);grad.addColorStop(0,rgba(T.accent,.28));grad.addColorStop(1,rgba(T.accent,0));
+  mkChart(cv,{type:'line',data:{labels:d.map(x=>x.date.slice(5)),datasets:[{data:d.map(x=>Math.round(x.eq)),borderColor:T.accent,backgroundColor:grad,fill:true,tension:.25,pointRadius:0,pointHoverRadius:4,borderWidth:2}]},options:baseOpts(T,v=>fmtAud(v))})}};
+
+/* ---------- strategy builder ---------- */
+function paramRow(path){const m=PARAMS[path],v=getP(S.strategy,path),a=(m.rec[0]-m.min)/(m.max-m.min)*100,b=(m.rec[1]-m.min)/(m.max-m.min)*100,id='p-'+path.replace(/\./g,'-'),u=pick(m.u);
+  return `<div class="prow"><label for="${id}">${pick(m.l)} <span class="muted small">· ${tr('推荐','suggested')} ${m.rec[0]}–${m.rec[1]}${u?' '+u:''}</span></label>
+  <div class="pctl"><input type="range" id="${id}" data-path="${path}" min="${m.min}" max="${m.max}" step="${m.step}" value="${v}" style="--a:${a}%;--b:${b}%">
+  <div class="pnum"><input type="number" id="${id}-n" data-path="${path}" min="${m.min}" max="${m.max}" step="${m.step}" value="${v}" aria-label="${pick(m.l)}"><span class="unit">${u}</span></div></div>
+  <div data-hint="${path}">${hintFor(path,v)}</div></div>`}
+function hintFor(path,v){const m=PARAMS[path];return(v<m.rec[0]||v>m.rec[1])?`<span class="pill warn">${ic('alert')}${tr('超出推荐区间。允许使用,提交时会再次提示。','Outside the suggested range. Allowed, and flagged again when you submit.')}</span>`:''}
+function blockCard([key,title,desc,ps,tag]){const on=getP(S.strategy,key+'.on'),id='t-'+key.replace(/\./g,'-');
+  return `<div class="block ${on?'on':''}" data-block="${key}"><div class="block-h"><span class="sw"><input type="checkbox" id="${id}" data-toggle="${key}.on" ${on?'checked':''} aria-label="${pick(title)}"><span></span></span>
+   <div class="bt"><label for="${id}" style="cursor:pointer"><b>${pick(title)}</b></label><span class="tag">${tag}</span><p class="muted small">${pick(desc)}</p></div></div>
+   <div class="params" ${on?'':'hidden'}>${ps.map(p=>paramRow(key+'.'+p)).join('')}</div></div>`}
+function exitPanel(){const x=S.strategy.exit;return `<div class="stack">
+  <div class="row"><span class="small muted">${tr('止损止盈方式','Stop and target')}</span><div class="seg" role="group"><button type="button" data-mode="points" aria-pressed="${x.mode==='points'}">${tr('固定点数','Fixed points')}</button><button type="button" data-mode="atr" aria-pressed="${x.mode==='atr'}">${tr('ATR 倍数','ATR multiple')}</button></div></div>
+  <div class="block on"><div class="params" style="border-top:0">${x.mode==='points'?paramRow('exit.stop')+paramRow('exit.target'):paramRow('exit.atrStop')+paramRow('exit.atrTarget')}</div></div>
+  ${blockCard(['exit.time',['时间止损','Time stop'],['持仓超过设定时间仍未触发止损或止盈时,按市价平仓。','Close at market if neither stop nor target is hit within the set time.'],['min'],'X3'])}
+  <div class="note">${ic('info')}<span>${tr('均值回归使用自己的规则:止损 25 点,目标回到均值。收盘前强平属于固定风控,不能在这里关闭。','Mean reversion uses its own rule: a 25-point stop and a target at the mean. The close-out before the market closes is a fixed risk rule and cannot be turned off here.')}</span></div></div>`}
+function prioPanel(){const on=S.strategy.priority.filter(k=>S.strategy.signals[k].on);return `<div class="stack"><p class="muted small">${tr('同一根 K 线上多个信号同时触发时,按这个顺序只取第一个。同一时间最多持有 1 个仓位。','When several signals fire on the same bar, only the first in this order is taken. At most one position is open at a time.')}</p>
+  <ol class="prio">${on.map((k,i)=>`<li><span class="n">${i+1}</span><span class="sig grow"><i style="background:var(--c${SIG[k].c+1})"></i>${sigName(k)}</span><button class="iconbtn" data-prio="${k}" data-dir="-1" ${i===0?'disabled':''} aria-label="${tr('上移','Move up')}">${ic('up')}</button><button class="iconbtn" data-prio="${k}" data-dir="1" ${i===on.length-1?'disabled':''} aria-label="${tr('下移','Move down')}">${ic('down')}</button></li>`).join('')||`<li class="muted">${tr('还没有启用入场信号。','No entry signal is on yet.')}</li>`}</ol></div>`}
+const TEMPLATES={
+  demo:{n:['多信号组合(示例)','Multi-signal (sample)'],f:()=>clone(DEFAULT_STRATEGY)},
+  trend:{n:['纯趋势','Trend only'],f:()=>{const s=clone(DEFAULT_STRATEGY);s.signals.breakout.on=false;s.signals.orb.on=false;s.signals.trend.bars=6;s.exit.mode='atr';return s}},
+  mr:{n:['震荡均值回归','Range mean reversion'],f:()=>{const s=clone(DEFAULT_STRATEGY);for(const k in s.signals)s.signals[k].on=false;s.signals.mr.on=true;s.filters.adx.th=22;return s}},
+  blank:{n:['空白','Blank'],f:()=>{const s=clone(DEFAULT_STRATEGY);for(const k in s.signals)s.signals[k].on=false;for(const k in s.filters)s.filters[k].on=false;return s}}
+};
+VIEWS.strategy={html:()=>{const t=S.builderTab;return topbar(tr('策略配置','Strategy'),tr(`策略 v${S.version} 生效中 · 修改将在下一个交易日生效`,`Strategy v${S.version} · changes take effect on the next trading day`),`<span class="pill" id="diffpill">${tr('未修改','No changes')}</span>`)+
+ `<div class="builder">
+  <section class="stack" style="gap:16px">
+    <div class="card stack"><div class="row" style="justify-content:space-between"><b>${tr('从模板开始','Start from a template')}</b><span class="pill warn">${tr('示例,未经独立验证','Sample, not independently validated')}</span></div>
+      <div class="chips">${Object.entries(TEMPLATES).map(([k,v])=>`<button type="button" class="chip" data-tpl="${k}">${pick(v.n)}</button>`).join('')}</div>
+      <div class="row small"><span class="muted">${tr('交易标的','Market')}</span><b>${tr('US Tech 100 现货 CFD · IG','US Tech 100 cash CFD · IG')}</b><span class="muted">· ${tr('主 K 线','Main bar')}</span><div class="seg" role="group">${['15s','1m','5m'].map(b=>`<button type="button" data-bar="${b}" aria-pressed="${S.strategy.bar===b}">${pick({'15s':['15 秒','15 s'],'1m':['1 分钟','1 min'],'5m':['5 分钟','5 min']}[b])}</button>`).join('')}</div></div></div>
+    <div class="card"><div class="tabs" role="tablist">${[['signals',['入场信号','Entry signals']],['filters',['过滤与调度','Filters']],['exit',['离场','Exits']],['prio',['优先级','Priority']]].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${t===k}">${pick(l)}</button>`).join('')}</div>
+      <div class="row" style="justify-content:space-between;margin-bottom:12px"><span class="legend-rec"><i></i>${tr('滑块上的浅色区间是推荐范围,超出时会提示','The shaded part of each slider is the suggested range')}</span><span class="small muted">${tr('默认值来源:示例模板,未经独立验证','Defaults come from a sample template, not independently validated')}</span></div>
+      <div class="stack">${t==='signals'?BLOCKS.signals.map(blockCard).join(''):t==='filters'?BLOCKS.filters.map(blockCard).join('')+`<div class="note">${ic('info')}<span>${tr(`交易时段固定为美股常规时段(纽约 09:30–16:00,对应悉尼 ${sessionInSydney()}),由服务器按夏令时自动换算。`,`Trading hours are fixed to the US regular session (New York 09:30–16:00, Sydney ${sessionInSydney()}). Your server adjusts for daylight saving automatically.`)}</span></div>`:t==='exit'?exitPanel():prioPanel()}</div></div>
+  </section>
+  <aside class="side-sticky">
+    <div class="card"><div class="card-h"><h2>${tr('规则预览','Rule preview')}</h2><span class="pill">${tr('演示行情 · 15 秒 K 线','Demo prices · 15 s bars')}</span></div>
+      <div class="preview-wrap"><canvas id="pv" aria-label="${tr('规则在演示行情上的触发位置','Where the rules fire on demo prices')}"></canvas></div>
+      <div class="row small" style="margin-top:8px" id="pvstat"></div>
+      <p class="small muted" style="margin-top:6px">${tr('三角形是入场位置(字母代表信号类型),圆圈是平仓位置。预览只用来检查规则是否按你的意图触发,不代表盈利能力。','Triangles are entries (the letter is the signal type) and circles are exits. The preview checks that rules fire as you intend. It says nothing about profitability.')}</p></div>
+    <div class="card"><div class="card-h"><h2>${tr('提交前检查','Checks before you submit')}</h2><span id="chk-sum"></span></div><ul class="checks" id="chk"></ul></div>
+    <div class="card"><div class="tabs" role="tablist">${[['spec',['策略规格','Spec']],['code',['生成的代码','Generated code']],['diff',['本次修改','Changes']]].map(([k,l])=>`<button role="tab" data-out="${k}" aria-selected="${S.outTab===k}">${pick(l)}</button>`).join('')}</div><pre class="code" id="out"></pre></div>
+    <div class="card row" style="justify-content:space-between"><span class="small muted">${tr('修改会生成新的策略版本,需要你签名确认。','Changes create a new strategy version that you sign.')}</span><div class="row"><button class="btn" id="reset">${tr('撤销修改','Discard')}</button><button class="btn primary" id="submit">${ic('key')}${tr('提交并签名','Submit and sign')}</button></div></div>
+  </aside></div>`},
+ mount(){
+  let sim=null,raf=0;const cv=$('#pv');
+  const refresh=()=>{raf=0;sim=simulate(S.strategy,BARS);drawPreview(cv,BARS,sim,S.strategy);
+    $('#pvstat').innerHTML=`<span class="pill">${tr('原始信号','Raw signals')} ${sim.raw}</span><span class="pill acc">${tr('入场','Entries')} ${sim.markers.length}</span><span class="pill">${tr('已平仓','Closed')} ${sim.trades}</span>${sim.open?`<span class="pill info">${tr('1 笔持仓中','1 open')}</span>`:''}`;
+    const L=checks(S.strategy,sim),icn={ok:'check',warn:'alert',bad:'x',info:'info'},col={ok:'gain',warn:'warnc',bad:'loss',info:''};
+    $('#chk').innerHTML=L.map(([lv,tx])=>`<li><span class="${col[lv]}">${ic(icn[lv])}</span><span>${tx}</span></li>`).join('');
+    $('#chk-sum').innerHTML=hasBad(L)?`<span class="pill bad">${tr('需要修正','Needs a fix')}</span>`:L.some(l=>l[0]==='warn')?`<span class="pill warn">${tr('可以提交,有提醒','OK with warnings')}</span>`:`<span class="pill ok">${tr('可以提交','Ready')}</span>`;
+    const d=diffList(S.effective,S.strategy),dp=$('#diffpill');dp.className='pill '+(d.length?'warn':'');dp.textContent=d.length?tr(`已修改 ${d.length} 项`,`${d.length} changes`):tr('未修改','No changes');
+    const out=$('#out');if(S.outTab==='spec')out.textContent=JSON.stringify({schema:'exbot.strategy/1',version:S.version+1,instrument:'IG · US Tech 100 cash CFD',blocks_version:'2026.10',spec:S.strategy},null,2);
+    else if(S.outTab==='code')out.textContent=genPython(S.strategy,S.version+1);
+    else out.innerHTML=d.length?d.map(x=>`<span class="diff-del">- ${esc(labelOf(x.k))}: ${esc(fmtVal(x.from))}</span>\n<span class="diff-add">+ ${esc(labelOf(x.k))}: ${esc(fmtVal(x.to))}</span>`).join('\n'):esc(tr(`与当前的 v${S.version} 相同。`,`Same as the current v${S.version}.`));
+    $('#submit').disabled=hasBad(L)};
+  const schedule=()=>{if(!raf)raf=requestAnimationFrame(refresh)};
+  const ro=new ResizeObserver(()=>{if(sim)drawPreview(cv,BARS,sim,S.strategy)});ro.observe(cv);cleanups.push(()=>ro.disconnect());
+  const view=$('#view');
+  const onInput=e=>{const el=e.target;
+    if(el.dataset.path){const m=PARAMS[el.dataset.path];let v=parseFloat(el.value);if(isNaN(v))return;v=Math.min(m.max,Math.max(m.min,v));setP(S.strategy,el.dataset.path,v);
+      const id='p-'+el.dataset.path.replace(/\./g,'-'),r=document.getElementById(id),nb=document.getElementById(id+'-n');if(r&&r!==el)r.value=v;if(nb&&nb!==el)nb.value=v;
+      const h=view.querySelector(`[data-hint="${el.dataset.path}"]`);if(h)h.innerHTML=hintFor(el.dataset.path,v);schedule()}
+    if(el.dataset.toggle){setP(S.strategy,el.dataset.toggle,el.checked);const blk=el.closest('.block');blk.classList.toggle('on',el.checked);const p=blk.querySelector('.params');if(p)p.hidden=!el.checked;schedule()}};
+  view.addEventListener('input',onInput);view.addEventListener('change',onInput);cleanups.push(()=>{view.removeEventListener('input',onInput);view.removeEventListener('change',onInput)});
+  const onClick=e=>{const b=e.target.closest('button');if(!b||!view.contains(b))return;
+    if(b.dataset.tab){S.builderTab=b.dataset.tab;render()}
+    else if(b.dataset.out){S.outTab=b.dataset.out;$$('[data-out]').forEach(x=>x.setAttribute('aria-selected',x===b));schedule()}
+    else if(b.dataset.mode){S.strategy.exit.mode=b.dataset.mode;render()}
+    else if(b.dataset.bar){S.strategy.bar=b.dataset.bar;$$('[data-bar]').forEach(x=>x.setAttribute('aria-pressed',x===b));schedule()}
+    else if(b.dataset.tpl){S.strategy=TEMPLATES[b.dataset.tpl].f();toast(tr('已载入模板:','Template loaded: ')+pick(TEMPLATES[b.dataset.tpl].n));render()}
+    else if(b.dataset.prio){const on=S.strategy.priority.filter(k=>S.strategy.signals[k].on),i=on.indexOf(b.dataset.prio),j=i+(+b.dataset.dir);if(j<0||j>=on.length)return;[on[i],on[j]]=[on[j],on[i]];
+      S.strategy.priority=[...on,...S.strategy.priority.filter(k=>!S.strategy.signals[k].on)];render()}
+    else if(b.id==='reset'){S.strategy=clone(S.effective);toast(tr('已恢复为当前版本','Back to the current version'));render()}
+    else if(b.id==='submit')submitStrategy()};
+  view.addEventListener('click',onClick);cleanups.push(()=>view.removeEventListener('click',onClick));
+  refresh();
+ }};
+async function submitStrategy(){
+  const d=diffList(S.effective,S.strategy);if(!d.length){toast(tr('没有需要提交的修改','There is nothing to submit'));return}
+  const L=checks(S.strategy,simulate(S.strategy,BARS)),warns=L.filter(l=>l[0]==='warn');
+  const outRec=Object.keys(PARAMS).filter(p=>{const v=getP(S.strategy,p),m=PARAMS[p],blk=p.split('.').slice(0,2).join('.');return v!=null&&(v<m.rec[0]||v>m.rec[1])&&getP(S.strategy,blk+'.on')!==false});
+  const ver=S.version+1,hash=(await sha256Hex(canon({instance:'inst-7f3a',version:ver,spec:S.strategy}))).slice(0,16),open=nextOpen();
+  const extra=[...warns.map(w=>w[1]),...(outRec.length?[tr(`${outRec.length} 个参数超出推荐区间。`,`${outRec.length} parameters are outside the suggested range.`)]:[])];
+  openSheet(`<h2 id="sheet-title">${tr('提交策略','Submit strategy')} v${ver}</h2>
+   <div class="card flat"><b class="small">${tr('本次修改','Changes')}</b><ul class="checks" style="margin-top:8px">${d.slice(0,8).map(x=>`<li>${ic('arrow')}<span>${esc(labelOf(x.k))}: <span class="mono">${esc(fmtVal(x.from))} → ${esc(fmtVal(x.to))}</span></span></li>`).join('')}${d.length>8?`<li class="muted">${tr(`另有 ${d.length-8} 项`,`${d.length-8} more`)}</li>`:''}</ul></div>
+   ${extra.length?`<div class="note warn">${ic('alert')}<span>${extra.join(' ')}</span></div>`:''}
+   <dl class="kv"><dt>${tr('生效时间','Takes effect')}</dt><dd>${openLabel(open)}</dd><dt>${tr('规格哈希','Spec hash')}</dt><dd>${hash}</dd><dt>${tr('签名内容','What you sign')}</dt><dd>${tr('版本号、服务器 ID、规格哈希、签发时间','Version, server ID, spec hash, time issued')}</dd></dl>
+   <label class="check"><input type="checkbox" id="sb-ack"><span>${tr('这是我自己的策略决定。我理解平台不提供投资建议,修改不保证任何结果。','This is my own strategy decision. I understand ExBot! gives no investment advice and no change guarantees any result.')}</span></label>
+   <div class="row" style="justify-content:flex-end"><button class="btn" id="sb-cancel">${tr('返回修改','Keep editing')}</button><button class="btn primary" id="sb-go" disabled>${ic('key')}${tr('用 passkey 签名','Sign with passkey')}</button></div>`,el=>{
+    $('#sb-ack',el).onchange=e=>{$('#sb-go',el).disabled=!e.target.checked};$('#sb-cancel',el).onclick=closeSheet;
+    $('#sb-go',el).onclick=()=>passkey({title:tr(`签名确认 v${ver}`,`Sign v${ver}`),ok:tr('已签名','Signed'),onDone:()=>{
+      const titleZh=d.slice(0,2).map(x=>{const keep=LANG;LANG='zh';const s=`${labelOf(x.k)} ${fmtVal(x.from)} → ${fmtVal(x.to)}`;LANG=keep;return s}).join(';')+(d.length>2?` 等 ${d.length} 项`:'');
+      const titleEn=d.slice(0,2).map(x=>{const keep=LANG;LANG='en';const s=`${labelOf(x.k)} ${fmtVal(x.from)} → ${fmtVal(x.to)}`;LANG=keep;return s}).join('; ')+(d.length>2?` and ${d.length-2} more`:'');
+      const now=new Intl.DateTimeFormat('sv-SE',{timeZone:'Australia/Sydney',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date());
+      S.versions.unshift({v:ver,status:'pending',title:[titleZh,titleEn],signed:now,device:['当前设备 · passkey','This device · passkey'],hash,verified:tr('服务器已验签 · 刚刚','Verified by your server · just now'),eff:[openLabel(open),openLabel(open)],prevSpec:clone(S.effective),prevVer:S.version});
+      S.effective=clone(S.strategy);S.version=ver;
+      openSheet(`<h2 id="sheet-title">v${ver} ${tr('已提交','submitted')}</h2><div class="note ok">${ic('check')}<span>${tr(`你的服务器已收到并验证了签名。新版本将在 ${openLabel(open)} 生效。`,`Your server received and verified the signature. The new version takes effect ${openLabel(open)}.`)}</span></div>
+       <div class="note">${ic('mail')}<span>${tr('服务器已直接向你的邮箱发送确认通知。生效前你可以在"版本与签名"里取消。','Your server emailed you a confirmation directly. You can cancel it under Versions before it takes effect.')}</span></div>
+       <div class="row" style="justify-content:flex-end"><a class="btn" href="#history" id="dn-h">${tr('查看版本记录','View versions')}</a><button class="btn primary" id="dn-ok">${tr('完成','Done')}</button></div>`,e2=>{$('#dn-ok',e2).onclick=()=>{closeSheet();render()};$('#dn-h',e2).onclick=closeSheet})}})});
+}
+
+/* ---------- risk + emergency stop ---------- */
+const RISK=[{k:'size',l:['单笔手数','Size per trade'],min:.5,max:10,step:.5,u:['手','lots'],cap:10,help:['IG 迷你合约,每手每点约 A$1。','IG mini contract, about A$1 per point per lot.']},
+ {k:'daily',l:['日内最大亏损','Daily loss limit'],min:100,max:5000,step:50,u:['A$','A$'],cap:5000,help:['当天已实现亏损达到后,不再开新仓。','After this realised loss in a day, no new trades open.']},
+ {k:'rate',l:['每分钟最多下单','Orders per minute'],min:1,max:30,step:1,u:['次','orders'],cap:30,help:['远低于券商每分钟 100 次的限制。','Well below the broker limit of 100 a minute.']}];
+const rv=(r,v)=>r.k==='daily'?fmtAud(v):v+' '+pick(r.u);
+VIEWS.risk={html:()=>{const ch=RISK.filter(r=>S.riskDraft[r.k]!==S.risk[r.k]),loosen=ch.some(r=>S.riskDraft[r.k]>S.risk[r.k]);
+ return topbar(tr('风控与停止','Risk limits and stop'),tr('风控规则由你服务器上的固定程序执行,策略代码无法绕过','Risk rules run in fixed code on your server. Strategy code cannot bypass them'))+
+ `<section class="bigstop" style="margin-bottom:16px">${ic('stop','lg')}<div class="stack" style="gap:2px;min-width:0"><b>${S.stopped?tr('交易已停止','Trading is stopped'):tr('紧急停止','Emergency stop')}</b><span class="small muted">${S.stopped?tr(`已停止开新仓 · 已有持仓:${S.stopMode==='close'?'已平仓':'保留,由原止损止盈管理'}。恢复运行需要 passkey 确认。`,`No new trades · open position: ${S.stopMode==='close'?'closed':'kept, managed by its stop and target'}. Resuming needs your passkey.`):tr('立即停止开新仓。紧急停止不需要签名,但恢复运行需要。','Stop opening new trades right now. Stopping needs no signature. Resuming does.')}</span></div>
+   ${S.stopped?`<button class="btn primary" id="resume">${ic('play')}${tr('恢复运行','Resume')}</button>`:`<button class="btn danger" id="stop">${ic('stop')}${tr('立即停止交易','Stop trading now')}</button>`}</section>
+ <div class="grid cols-2">
+  <section class="card stack"><div class="card-h" style="margin:0"><h2>${tr('风控上限','Limits')}</h2>${ch.length?(loosen?`<span class="pill warn">${tr('放宽:需签名,24 小时后生效','Loosening: needs signature, 24 h delay')}</span>`:`<span class="pill ok">${tr('收紧:立即生效','Tightening: immediate')}</span>`):`<span class="pill">${tr('未修改','No changes')}</span>`}</div>
+   ${RISK.map(r=>{const v=S.riskDraft[r.k],id='rk-'+r.k;return `<div class="prow"><label for="${id}">${pick(r.l)} <span class="muted small">· ${tr('当前','current')} ${rv(r,S.risk[r.k])}</span></label>
+     <div class="pctl"><input type="range" id="${id}" data-rk="${r.k}" min="${r.min}" max="${r.max}" step="${r.step}" value="${v}" style="--a:0%;--b:0%"><div class="pnum"><input type="number" id="${id}-n" data-rk="${r.k}" min="${r.min}" max="${r.max}" step="${r.step}" value="${v}" aria-label="${pick(r.l)}"><span class="unit">${pick(r.u)}</span></div></div>
+     <span class="small muted">${pick(r.help)} ${tr('系统绝对上限:','Hard system cap:')} ${rv(r,r.cap)}.</span></div>`}).join('')}
+   <div class="prow"><label>${tr('同时持仓','Open positions')}</label><span class="row small"><span class="pill">${ic('lock')}${tr('固定为 1 个','Fixed at 1')}</span><span class="muted">${tr('不允许叠加仓位。','No stacking.')}</span></span></div>
+   <div class="prow"><label>${tr('收盘强平','Close-out')}</label><span class="row small"><span class="pill">${ic('lock')}${tr('收盘前 5 分钟','5 min before close')}</span><span class="muted">${tr('不留隔夜仓,无法关闭。','No overnight positions. Cannot be turned off.')}</span></span></div>
+   <div class="row" style="justify-content:flex-end"><button class="btn" id="rk-reset" ${ch.length?'':'disabled'}>${tr('撤销','Discard')}</button><button class="btn primary" id="rk-apply" ${ch.length?'':'disabled'}>${loosen?ic('key')+tr('签名并提交','Sign and submit'):tr('立即应用','Apply now')}</button></div></section>
+  <section class="card stack"><div class="card-h" style="margin:0"><h2>${tr('为什么这样设计','Why it works this way')}</h2></div>
+   <div class="check">${ic('check')}<span>${tr('<b>收紧随时可以,立即生效。</b>想少冒险的时候,不需要任何等待。','<b>Tightening is instant.</b> When you want less risk, there is no wait.')}</span></div>
+   <div class="check">${ic('check')}<span>${tr('<b>放宽需要签名,并等待 24 小时。</b>亏损后最容易冲动加码,冷静期能挡住这种情况。','<b>Loosening needs a signature and 24 hours.</b> The urge to size up comes right after a loss. The wait blocks it.')}</span></div>
+   <div class="check">${ic('check')}<span>${tr('<b>策略代码改不了风控。</b>即使策略规则有错误,单笔手数、日内亏损和下单频率也被这里封顶。','<b>Strategy code cannot change these limits.</b> Even a faulty rule stays capped on size, daily loss and order rate.')}</span></div>
+   <div class="check">${ic('check')}<span>${tr('<b>和 IG 平台自己的做法一致。</b>IG 的自动交易工具也要求先设置最大持仓,超出的订单会被拒绝。','<b>It matches IG’s own approach.</b> IG’s automated trading tool also requires a maximum position size and rejects orders above it.')}</span></div>
+   <h3 style="margin-top:6px">${tr('待生效的风控变更','Pending limit changes')}</h3>
+   ${S.riskPending.map(p=>`<div class="card flat row" style="justify-content:space-between"><div class="stack" style="gap:2px"><b class="small">${pick(p.title)}</b><span class="small muted">${p.status==='pending'?tr(`约 ${Math.max(0,Math.round((p.eff-Date.now())/3600e3))} 小时后生效 · 签名 `,`In about ${Math.max(0,Math.round((p.eff-Date.now())/3600e3))} h · signed `)+p.signed:tr('已取消','Cancelled')}</span></div>${p.status==='pending'?`<button class="btn sm" data-cancel-risk="${p.id}">${tr('取消','Cancel')}</button>`:`<span class="pill">${tr('已取消','Cancelled')}</span>`}</div>`).join('')||`<p class="muted small">${tr('没有。','None.')}</p>`}
+  </section></div>`},
+ mount(){
+  const view=$('#view'),sync=e=>{const el=e.target;if(!el.dataset.rk)return;const r=RISK.find(x=>x.k===el.dataset.rk);let v=parseFloat(el.value);if(isNaN(v))return;v=Math.min(r.max,Math.max(r.min,v));S.riskDraft[r.k]=v;
+    if(e.type==='change')render();else{const o=document.getElementById(el.type==='range'?'rk-'+r.k+'-n':'rk-'+r.k);if(o)o.value=v}};
+  view.addEventListener('input',sync);view.addEventListener('change',sync);cleanups.push(()=>{view.removeEventListener('input',sync);view.removeEventListener('change',sync)});
+  const st=$('#stop');if(st)st.onclick=()=>openSheet(`<h2 id="sheet-title">${tr('立即停止交易','Stop trading now')}</h2><p class="muted">${tr('服务器会停止开新仓。这一步不需要签名,只要能登录就能操作。','Your server stops opening trades. This needs no signature, only that you are signed in.')}</p>
+    <fieldset class="stack" style="border:0;padding:0;margin:0"><legend class="small" style="font-weight:500;margin-bottom:6px">${tr('已有持仓怎么处理','What about the open position')}</legend>
+    <label class="check"><input type="radio" name="sm" value="keep" checked><span>${tr('保留,继续由原来的止损和止盈管理','Keep it, managed by its stop and target')}</span></label><label class="check"><input type="radio" name="sm" value="close"><span>${tr('立即按市价平仓','Close it at market now')}</span></label></fieldset>
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="sp-c">${tr('取消','Cancel')}</button><button class="btn danger" id="sp-go">${ic('stop')}${tr('确认停止','Stop trading')}</button></div>`,el=>{$('#sp-c',el).onclick=closeSheet;
+    $('#sp-go',el).onclick=()=>{S.stopMode=$('input[name="sm"]:checked',el).value;S.stopped=true;closeSheet();toast(tr('交易已停止,服务器已确认','Trading stopped. Your server confirmed.'));render()}});
+  const rs=$('#resume');if(rs)rs.onclick=()=>passkey({title:tr('恢复运行','Resume trading'),ok:tr('已确认恢复','Resumed'),onDone:()=>{S.stopped=false;toast(tr('已恢复运行','Trading resumed'));render()}});
+  $('#rk-reset').onclick=()=>{S.riskDraft={...S.risk};render()};
+  $('#rk-apply').onclick=()=>{const loosen=RISK.some(r=>S.riskDraft[r.k]>S.risk[r.k]);
+    if(!loosen){S.risk={...S.riskDraft};toast(tr('已收紧,立即生效','Tightened. In effect now.'));render();return}
+    const chg=l=>RISK.filter(r=>S.riskDraft[r.k]!==S.risk[r.k]).map(r=>{const keep=LANG;LANG=l;const s=`${pick(r.l)} ${rv(r,S.risk[r.k])} → ${rv(r,S.riskDraft[r.k])}`;LANG=keep;return s}).join(l==='zh'?';':'; ');
+    passkey({title:tr('签名放宽风控','Sign to loosen limits'),body:`<div class="note warn">${ic('clock')}<span>${chg(LANG)}. ${tr('签名后 24 小时生效,期间可随时取消。','Takes effect 24 hours after signing. You can cancel any time before then.')}</span></div>`,ok:tr('已签名','Signed'),onDone:()=>{
+      S.riskPending.unshift({id:'r'+Date.now(),title:[chg('zh'),chg('en')],status:'pending',eff:Date.now()+24*3600e3,signed:tr('刚刚 · 当前设备','just now · this device')});
+      for(const r of RISK)if(S.riskDraft[r.k]<S.risk[r.k])S.risk[r.k]=S.riskDraft[r.k];S.riskDraft={...S.risk};toast(tr('已签名,24 小时后生效','Signed. Takes effect in 24 hours.'));render()}})};
+  $$('[data-cancel-risk]').forEach(b=>b.onclick=()=>{const p=S.riskPending.find(x=>x.id===b.dataset.cancelRisk);if(p){p.status='canceled';toast(tr('已取消这项变更','Change cancelled'));render()}});
+ }};
+
+/* ---------- reports ---------- */
+function repTrades(){const P=S.repPeriod,days=[...new Set(TRADES.map(t=>t.date))],cut=P==='all'?'':days[Math.max(0,days.length-(+P))];return TRADES.filter(t=>t.date>=cut)}
+VIEWS.reports={html:()=>{const P=S.repPeriod,ts=repTrades(),s=stats(ts),per=Object.keys(SIG).map(k=>({k,...stats(ts.filter(t=>t.type===k))})).filter(x=>x.n);
+ return topbar(tr('报表','Reports'),tr('演示账户 · 按美股交易日统计','Demo account · by US trading day'),`<div class="seg" role="group">${[['30',['近 30 天','30 days']],['60',['近 60 天','60 days']],['all',['全部','All']]].map(([k,l])=>`<button type="button" data-per="${k}" aria-pressed="${P===k}">${pick(l)}</button>`).join('')}</div>`)+
+ `<div class="note warn" style="margin-bottom:16px">${ic('alert')}<span>${tr(`本区间共 ${s.n} 笔成交,少于 300 笔。这些数字只能说明系统记录了什么,不足以判断策略有没有优势。以下全部为演示数据。`,`${s.n} trades in this period, fewer than 300. These numbers show what was recorded, not whether the strategy has an edge. Everything below is demo data.`)}</span></div>
+ <section class="grid cols-4">
+  <div class="card kpi"><span class="s">${tr('净盈亏(已扣点差)','Net P&L (after spread)')}</span><span class="v ${s.net>=0?'gain':'loss'}">${fmtAud(s.net,true)}</span><span class="s">${s.n} ${tr('笔','trades')}</span></div>
+  <div class="card kpi"><span class="s">${tr('胜率','Win rate')}</span><span class="v">${fmtPct(s.wr)}</span><span class="s">${tr('60/90 点的保本胜率约 40%','Break-even for 60/90 points is about 40%')}</span></div>
+  <div class="card kpi"><span class="s">${tr('盈亏比(总盈利 ÷ 总亏损)','Profit factor')}</span><span class="v">${s.pf.toFixed(2)}</span><span class="s">${tr('大于 1 表示盈利多于亏损','Above 1 means more won than lost')}</span></div>
+  <div class="card kpi"><span class="s">${tr('最大回撤','Max drawdown')}</span><span class="v loss">${fmtAud(s.mdd)}</span><span class="s">${tr(`平均持仓 ${Math.round(s.hold)} 分钟`,`Average hold ${Math.round(s.hold)} min`)}</span></div></section>
+ <section class="grid cols-2" style="margin-top:16px">
+  <div class="card"><div class="card-h"><h2>${tr('净值与回撤','Equity and drawdown')}</h2></div><div class="chart-box"><canvas id="r-eq" aria-label="${tr('净值曲线','Equity')}"></canvas></div><div class="chart-box short" style="margin-top:8px"><canvas id="r-dd" aria-label="${tr('回撤曲线','Drawdown')}"></canvas></div></div>
+  <div class="card"><div class="card-h"><h2>${tr('每笔结果分布','Result per trade')}</h2><span class="small muted">${tr('以点数计','In points')}</span></div><div class="chart-box tall"><canvas id="r-hist" aria-label="${tr('单笔点数分布','Points per trade')}"></canvas></div></div></section>
+ <section class="card" style="margin-top:16px"><div class="card-h"><h2>${tr('按信号拆分','By signal')}</h2><span class="small muted">${tr('每种信号单独统计,避免一个信号掩盖另一个','Each signal is counted on its own so one cannot hide another')}</span></div>
+  <div class="table-wrap"><table class="tbl"><thead><tr><th>${tr('信号','Signal')}</th><th class="num">${tr('笔数','Trades')}</th><th class="num">${tr('胜率','Win rate')}</th><th class="num">${tr('盈亏比','PF')}</th><th class="num">${tr('净盈亏','Net')}</th><th class="num">${tr('平均持仓','Avg hold')}</th><th>${tr('样本量','Sample')}</th></tr></thead><tbody>
+  ${per.map(x=>`<tr><td><span class="sig"><i style="background:var(--c${SIG[x.k].c+1})"></i>${sigName(x.k)}</span></td><td class="num">${x.n}</td><td class="num">${fmtPct(x.wr)}</td><td class="num">${x.pf.toFixed(2)}</td><td class="num ${x.net>=0?'gain':'loss'}">${fmtAud(x.net,true)}</td><td class="num">${Math.round(x.hold)} ${tr('分','min')}</td><td><span class="pill warn">${tr('不足 300 笔','Under 300')}</span></td></tr>`).join('')}
+  </tbody></table></div></section>
+ <section class="grid cols-2" style="margin-top:16px">
+  <div class="card"><div class="card-h"><h2>${tr('按月','By month')}</h2></div><div class="chart-box"><canvas id="r-mon" aria-label="${tr('按月盈亏','Monthly P&L')}"></canvas></div></div>
+  <div class="card"><div class="card-h"><h2>${tr('星期 × 悉尼时间','Weekday × Sydney hour')}</h2><span class="small muted">${tr('格内为成交笔数','Cells show trade count')}</span></div><div class="table-wrap" id="heat"></div></div></section>`},
+ mount(){
+  $$('[data-per]').forEach(b=>b.onclick=()=>{S.repPeriod=b.dataset.per;render()});
+  const ts=repTrades(),T=themeColors(),d=daily(ts),cv=$('#r-eq'),g=cv.getContext('2d').createLinearGradient(0,0,0,240);g.addColorStop(0,rgba(T.accent,.25));g.addColorStop(1,rgba(T.accent,0));
+  mkChart(cv,{type:'line',data:{labels:d.map(x=>x.date.slice(5)),datasets:[{data:d.map(x=>Math.round(x.eq)),borderColor:T.accent,backgroundColor:g,fill:true,tension:.2,pointRadius:0,borderWidth:2}]},options:baseOpts(T,v=>fmtAud(v))});
+  mkChart($('#r-dd'),{type:'line',data:{labels:d.map(x=>x.date.slice(5)),datasets:[{data:d.map(x=>Math.round(x.dd)),borderColor:T.loss,backgroundColor:rgba(T.loss,.18),fill:'origin',tension:.2,pointRadius:0,borderWidth:1.5}]},options:baseOpts(T,v=>fmtAud(v))});
+  const bins=[-60,-45,-30,-15,0,15,30,45,60,75,90],cnt=bins.map(()=>0);for(const t of ts){let i=bins.findIndex(b=>t.pts<b+7.5);if(i<0)i=bins.length-1;cnt[i]++}
+  mkChart($('#r-hist'),{type:'bar',data:{labels:bins.map(b=>(b>0?'+':'')+b),datasets:[{data:cnt,backgroundColor:bins.map(b=>b>0?rgba(T.gain,.75):b<0?rgba(T.loss,.75):rgba(T.muted,.6)),borderRadius:4}]},options:baseOpts(T,v=>v+tr(' 笔',' trades'))});
+  const mon={};for(const t of ts){const k=t.date.slice(0,7);mon[k]=(mon[k]||0)+t.pnl}const mk=Object.keys(mon).sort();
+  mkChart($('#r-mon'),{type:'bar',data:{labels:mk.map(k=>new Intl.DateTimeFormat(LOC(),{month:'short'}).format(new Date(Date.UTC(+k.slice(0,4),+k.slice(5)-1,15)))),datasets:[{data:mk.map(k=>Math.round(mon[k])),backgroundColor:mk.map(k=>mon[k]>=0?rgba(T.gain,.8):rgba(T.loss,.8)),borderRadius:5,maxBarThickness:56}]},options:baseOpts(T,v=>fmtAud(v))});
+  const wdN=pick([['周一','周二','周三','周四','周五'],['Mon','Tue','Wed','Thu','Fri']]),cells={},hrs=new Set();
+  for(const t of ts){const wd=['Mon','Tue','Wed','Thu','Fri'].indexOf(tzParts(t.ts,'America/New_York').weekday),h=+tzParts(t.ts,'Australia/Sydney').hour;if(wd<0)continue;hrs.add(h);const k=wd+'-'+h;cells[k]=cells[k]||{n:0,p:0};cells[k].n++;cells[k].p+=t.pnl}
+  const H=[...hrs].sort((a,b)=>((a+12)%24)-((b+12)%24)),mx=Math.max(1,...Object.values(cells).map(c=>Math.abs(c.p)));
+  $('#heat').innerHTML=`<div class="heat" style="grid-template-columns:44px repeat(${H.length},minmax(44px,1fr))"><span></span>${H.map(h=>`<span class="h">${String(h).padStart(2,'0')}${tr('时',':00')}</span>`).join('')}
+   ${wdN.map((w,wi)=>`<span class="rl">${w}</span>`+H.map(h=>{const c=cells[wi+'-'+h];if(!c)return`<span class="c"></span>`;const pct=Math.round(18+70*Math.abs(c.p)/mx);
+     return `<span class="c" title="${c.n} · ${fmtAud(c.p,true)}" style="background:color-mix(in srgb,var(${c.p>=0?'--gain':'--loss'}) ${pct}%,var(--surface-2))">${c.n}</span>`}).join('')).join('')}</div>
+   <p class="small muted" style="margin-top:8px">${tr('颜色深浅代表净盈亏大小。每格样本很少,不能据此调整交易时间。','Colour depth shows net P&L. Each cell holds very few trades, so do not change trading hours based on it.')}</p>`;
+ }};
+
+/* ---------- versions + signatures ---------- */
+VIEWS.history={html:()=>topbar(tr('版本与签名','Versions and signatures'),tr('每一次修改都有你的签名,服务器逐条验证后才执行','Every change carries your signature. Your server checks each one before it runs'))+
+ `<div class="grid cols-2"><section class="card"><div class="card-h"><h2>${tr('策略版本','Strategy versions')}</h2><span class="small muted">${tr('最新在上','Newest first')}</span></div><ol class="tl">
+ ${S.versions.map((v,i)=>{if(v.sec)return `<li><span class="mk bad">${ic('x')}</span><div><div class="row"><b>${pick(v.title)}</b><span class="pill bad">${tr('已拒绝','Rejected')}</span></div><p class="small muted">${v.at}</p><p class="small" style="margin-top:6px">${pick(v.detail)}</p></div></li>`;
+  const st={active:['ok',['生效中','Active'],'check'],pending:['warn',['待生效','Pending'],'clock'],superseded:['',['已被替代','Replaced'],'check'],canceled:['',['已取消','Cancelled'],'x']}[v.status];
+  return `<li><span class="mk ${st[0]}">${ic(st[2])}</span><div><div class="row"><b>v${v.v}</b><span class="pill ${st[0]}">${pick(st[1])}</span>${v.status==='pending'?`<button class="btn sm" data-cancel-v="${i}">${tr('取消这个版本','Cancel this version')}</button>`:''}</div><p class="small" style="margin-top:4px">${esc(pick(v.title))}</p>
+   <dl class="kv"><dt>${tr('签名','Signed')}</dt><dd>${v.signed} · ${pick(v.device)}</dd><dt>${tr('规格哈希','Spec hash')}</dt><dd>${v.hash}</dd><dt>${tr('服务器验签','Server check')}</dt><dd>${v.verified}</dd><dt>${tr('生效','Effective')}</dt><dd>${pick(v.eff)}</dd></dl></div></li>`}).join('')}</ol></section>
+ <section class="stack" style="gap:16px">
+  <div class="card stack"><h2>${tr('服务器如何验证','How your server checks a change')}</h2>
+   <ol class="steps" style="grid-template-columns:1fr">
+   <li><b>${tr('检查签名','Check the signature')}</b><span class="muted small">${tr('用你注册时留在服务器上的 passkey 公钥验证。公钥只能在你自己的服务器设置页里更换。','Using the passkey public key stored on your server at setup. It can only be replaced on your own server’s setup page.')}</span></li>
+   <li><b>${tr('检查对象','Check what was signed')}</b><span class="muted small">${tr('签名里包含服务器 ID、版本号和规格哈希,服务器自己重新计算哈希,对不上就拒绝。','The signature covers the server ID, version and spec hash. Your server recomputes the hash and rejects any mismatch.')}</span></li>
+   <li><b>${tr('检查顺序','Check the order')}</b><span class="muted small">${tr('版本号必须比当前更新,旧的签名不能重放。','The version must be newer than the current one, so old signatures cannot be replayed.')}</span></li>
+   <li><b>${tr('失败时','If a check fails')}</b><span class="muted small">${tr('继续运行上一个已验证版本,并直接给你发通知。','Your server keeps the last verified version and notifies you directly.')}</span></li></ol></div>
+  <div class="note">${ic('shield')}<span>${tr('即使我们的网站被入侵,攻击者也拿不到你的 passkey,无法让你的服务器执行未经你签名的策略。紧急停止例外:为了能随时止损,停止交易不需要签名。','Even if our website were breached, an attacker would not have your passkey and could not make your server run a strategy you did not sign. The one exception is the emergency stop, which needs no signature so you can always stop.')}</span></div>
+ </section></div>`,
+ mount(){$$('[data-cancel-v]').forEach(b=>b.onclick=()=>{const v=S.versions[+b.dataset.cancelV];if(!v)return;v.status='canceled';if(v.prevSpec){S.effective=clone(v.prevSpec);S.strategy=clone(v.prevSpec);S.version=v.prevVer}
+   toast(tr(`已取消 v${v.v},继续运行 v${S.version}`,`Cancelled v${v.v}. Still running v${S.version}.`));render()})}};
+
+/* ---------- security center ---------- */
+VIEWS.security={html:()=>topbar(tr('安全中心','Security'),tr('你的数据在哪里、谁能看到、怎么保护','Where your data lives, who can see it, how it is protected'))+
+ `<section class="card" style="margin-bottom:16px"><div class="card-h"><h2>${tr('你的数据放在哪里','Where your data lives')}</h2><span class="pill acc">${ic('shield')}${tr('按敏感程度分开存放','Stored by sensitivity')}</span></div>
+  <div class="table-wrap"><table class="tbl"><thead><tr><th>${tr('数据','Data')}</th><th>${tr('存放位置','Where')}</th><th>${tr('我们能否读取','Can we read it')}</th></tr></thead><tbody>
+   <tr><td>${tr('IG 账号、密码、API Key','IG login, password, API key')}</td><td>${tr('你的 AWS 账户 · 密钥管理服务(加密)','Your AWS account · encrypted secrets store')}</td><td><span class="pill ok">${ic('lock')}${tr('不能','No')}</span></td></tr>
+   <tr><td>${tr('持仓与成交的原始记录','Full position and trade records')}</td><td>${tr('你的服务器','Your server')}</td><td><span class="pill ok">${tr('不能 · 只收到摘要','No · summary only')}</span></td></tr>
+   <tr><td>${tr('券商行情数据','Broker price data')}</td><td>${tr('你的服务器','Your server')}</td><td><span class="pill ok">${tr('不转发 · 遵守券商条款','Not forwarded · per broker terms')}</span></td></tr>
+   <tr><td>${tr('策略规格与签名记录','Strategy specs and signatures')}</td><td>${tr('你的服务器 + 我们的数据库','Your server and our database')}</td><td><span class="pill info">${tr('能看到 · 不能代你签名','Yes · cannot sign for you')}</span></td></tr>
+   <tr><td>${tr('账户资料与账单','Account details and billing')}</td><td>${tr('我们的数据库(按客户隔离)','Our database, isolated per client')}</td><td><span class="pill">${tr('能','Yes')}</span></td></tr></tbody></table></div></section>
+ <div class="grid cols-2">
+  <section class="card stack"><div class="card-h" style="margin:0"><h2>passkey</h2><button class="btn sm" id="pk-add">${ic('key')}${tr('添加','Add')}</button></div>
+   <div class="card flat row" style="justify-content:space-between"><div class="stack" style="gap:0"><b class="small">iPhone · Face ID</b><span class="small muted">${tr('iCloud 钥匙串同步 · 2026-09-15 添加 · 今天使用过','iCloud Keychain · added 2026-09-15 · used today')}</span></div><span class="pill ok">${tr('主要','Primary')}</span></div>
+   <div class="card flat row" style="justify-content:space-between"><div class="stack" style="gap:0"><b class="small">MacBook · Touch ID</b><span class="small muted">${tr('同一 iCloud 钥匙串 · 2026-09-21 使用过','Same iCloud Keychain · used 2026-09-21')}</span></div><span class="pill">${tr('同步','Synced')}</span></div>
+   <p class="small muted">${tr('更换或删除 passkey 需要在你自己服务器的设置页里完成,在这里只能添加,防止网站被入侵时被替换。','Replacing or removing a passkey happens on your own server’s setup page. Here you can only add one, so a breached website cannot swap it.')}</p></section>
+  <section class="card stack"><div class="card-h" style="margin:0"><h2>${tr('登录设备','Signed-in devices')}</h2><button class="btn sm" id="ss-out">${tr('退出其他设备','Sign out others')}</button></div>
+   <div class="table-wrap"><table class="tbl"><tbody>
+    <tr><td><b class="small">${tr('本机 · Safari','This device · Safari')}</b><br><span class="small muted">${tr('悉尼 · passkey','Sydney · passkey')}</span></td><td class="num small">${tr('现在','Now')}</td></tr>
+    <tr id="ss-2"><td><b class="small">iPhone · ${tr('App 内浏览器','in-app browser')}</b><br><span class="small muted">${tr('悉尼 · passkey','Sydney · passkey')}</span></td><td class="num small">${tr('2 小时前','2 h ago')}</td></tr>
+    <tr id="ss-3"><td><b class="small">Windows · Chrome</b><br><span class="small muted">${tr('墨尔本 · 邮箱 + 验证码','Melbourne · email and code')}</span></td><td class="num small">${tr('3 天前','3 days ago')}</td></tr></tbody></table></div></section>
+  <section class="card stack"><h2>${tr('你的服务器','Your server')}</h2>
+   <dl class="kv" style="margin:0"><dt>${tr('地址','Address')}</dt><dd>${HOST}</dd><dt>${tr('位置','Location')}</dt><dd>${tr('你的 AWS 账户 · 悉尼','Your AWS account · Sydney')} ap-southeast-2</dd><dt>${tr('身份指纹','Identity')}</dt><dd>ed25519 · 7F3A 91C2 0D4E B8A1</dd>
+   <dt>${tr('设置页','Setup page')}</dt><dd>${tr('已关闭(只在你的 AWS 控制台里能重新打开)','Closed. Only your AWS console can reopen it.')}</dd><dt>${tr('运行时','Runtime')}</dt><dd>v1.3.2 · ${tr('你在 2026-09-30 选择更新','you chose to update on 2026-09-30')}</dd></dl>
+   <div class="note">${ic('info')}<span>${tr('服务器只主动向外连接,平时不开放任何入口。我们的运营人员没有登录它的权限。','Your server only makes outbound connections and keeps no open entry point. Our staff cannot sign in to it.')}</span></div></section>
+  <section class="card stack"><h2>${tr('通知','Notifications')}</h2>
+   <label class="check"><input type="checkbox" checked id="nt-1"><span><b>${tr('服务器直发邮件','Email from your server')}</b><br><span class="small muted">${tr('策略变更、验签失败、紧急停止、熔断触发。由你的服务器直接发送,不经过我们的网站。','Strategy changes, failed signatures, emergency stops, loss limit hits. Sent by your server directly, not through our website.')}</span></span></label>
+   <label class="check"><input type="checkbox" id="nt-2"><span><b>Telegram</b><br><span class="small muted">${tr('连接你自己的 Telegram 机器人后启用。','Available after you connect your own Telegram bot.')}</span></span></label>
+   <label class="check"><input type="checkbox" checked id="nt-3"><span><b>${tr('新设备登录提醒','New sign-in alerts')}</b><br><span class="small muted">demo.client@example.com</span></span></label></section>
+ </div>`,
+ mount(){$('#pk-add').onclick=()=>passkey({title:tr('添加 passkey','Add a passkey'),ok:tr('已添加','Added'),onDone:()=>toast(tr('新 passkey 已添加','New passkey added'))});$('#ss-out').onclick=()=>{['#ss-2','#ss-3'].forEach(s=>{const r=$(s);if(r)r.remove()});toast(tr('已退出其他 2 台设备','Signed out of 2 other devices'))}}};
+
+/* ---------- onboarding ---------- */
+const OB=[['风险告知','Risk notice'],['IG 账户','IG account'],['启动服务器','Launch server'],['服务器上线','Server online'],['核对验证码','Match the code'],['录入凭证','Enter credentials'],['注册 passkey','Register passkey']];
+const OB_CK=[['我理解 CFD 是高风险杠杆产品,我可能损失全部本金。','I understand CFDs are high-risk leveraged products and I can lose all of my money.'],
+ ['我理解平台提供的是软件工具与实施服务,不提供投资建议,也不承诺收益。示例策略未经独立验证。','I understand ExBot! provides software and setup services, gives no investment advice and promises no return. Sample strategies are not independently validated.'],
+ ['我理解我使用的是第三方提供的软件。我在 IG API 协议中作出的承诺由我本人负责;若 IG 暂停 API、作废交易或强制平仓,后果由我承担。','I understand I am using third-party software. I am responsible for the commitments I make in IG’s API agreement, and I bear the consequences if IG suspends API access, voids trades or closes positions.'],
+ ['我的 IG 账号、密码和 API Key 只由我本人输入,不会发送给任何人,包括平台人员。','Only I will type my IG login, password and API key, and I will not send them to anyone, including ExBot! staff.'],
+ ['首阶段只在 IG 演示账户上运行。','In the first stage the bot runs only on an IG demo account.']];
+VIEWS.onboard={html:()=>{const i=S.onboard;return topbar(tr('开户引导','Onboarding'),tr('我们一对一协助;每一步都由你本人操作','We guide you one to one. You do every step yourself'))+
+ `<ol class="stepper">${OB.map((s,j)=>`<li class="${j<i?'done':j===i?'cur':''}"><i></i>${j+1}. ${pick(s)}</li>`).join('')}</ol>
+  <section class="card" style="margin-top:16px;max-width:820px">${obStep(i)}</section>`},mount(){obMount(S.onboard)}};
+function obNav(next,dis=false){return `<div class="row" style="justify-content:space-between;margin-top:6px"><button class="btn" id="ob-back" ${S.onboard===0?'disabled':''}>${tr('上一步','Back')}</button><button class="btn primary" id="ob-next" ${dis?'disabled':''}>${next||tr('下一步','Next')} ${ic('arrow')}</button></div>`}
+function obStep(i){
+ if(i===0)return `<div class="stack"><h2>${tr('开始前请确认','Before you start')}</h2><p class="muted">${tr('这些内容会保存在你的签约记录里。全部勾选后才能继续。','These are kept with your agreement. Tick all of them to continue.')}</p>
+  ${OB_CK.map((t,j)=>`<label class="check"><input type="checkbox" class="ob-ck" id="ob-ck-${j}" ${S.onboardOk['c'+j]?'checked':''}><span>${pick(t)}</span></label>`).join('')}${obNav(tr('我已理解,继续','I understand, continue'),!OB_CK.every((_,j)=>S.onboardOk['c'+j]))}</div>`;
+ if(i===1)return `<div class="stack"><h2>${tr('在 IG 开户并生成 API Key','Open an IG account and create an API key')}</h2><div class="note">${ic('info')}<span>${tr('IG 要求:即使只用演示账户,也需要先有一个正式账户,才能生成 API Key。','IG requires a live account before you can create an API key, even if you only use the demo account.')}</span></div>
+  <ol class="steps" style="grid-template-columns:1fr"><li><b>${tr('在 IG 澳洲官网开户并完成身份验证','Open an account on IG Australia and verify your identity')}</b><span class="muted small">${tr('身份资料由你本人填写。我们可以共享屏幕讲解,但不会代你填写。','You fill in your own identity details. We can explain on a screen share, but we do not fill anything in for you.')}</span></li>
+  <li><b>${tr('切换到演示账户,进入 My Account → Settings → API Keys','Switch to the demo account and open My Account → Settings → API Keys')}</b><span class="muted small">${tr('每个账户只能有一个 API Key。','Each account can have one API key.')}</span></li>
+  <li><b>${tr('生成 API Key,先保存在你自己的密码管理器里','Create the key and keep it in your own password manager')}</b><span class="muted small">${tr('下一步会在你自己的服务器上输入,不要发给任何人。','You will enter it on your own server later. Do not send it to anyone.')}</span></li></ol>
+  <label class="check"><input type="checkbox" id="ob-ig" ${S.onboardOk.ig?'checked':''}><span>${tr('我已生成 API Key,并且没有发给任何人。','I have created my API key and have not sent it to anyone.')}</span></label>${obNav('',!S.onboardOk.ig)}</div>`;
+ if(i===2)return `<div class="stack"><h2>${tr('在你的 AWS 账户里启动服务器','Launch the server in your AWS account')}</h2><p class="muted">${tr('服务器属于你,账单由 AWS 直接向你收取(估算每月 A$20–35)。我们没有你 AWS 账户的任何权限。','The server is yours and AWS bills you directly (about A$20–35 a month, estimated). We have no access to your AWS account.')}</p>
+  <div class="field"><label>${tr('一次性注册令牌(在启动模板里粘贴)','One-time registration token (paste it into the launch template)')}</label><div class="row"><code class="codebox" style="flex:1;font-size:15px;letter-spacing:.04em" data-copy-src>REG-8K2F-QX7M-41DA</code><button class="btn" id="ob-copy">${ic('copy')}${tr('复制','Copy')}</button></div><span class="small muted">${tr('令牌 30 分钟内有效,只能使用一次。','Valid for 30 minutes, single use.')}</span></div>
+  <div class="card flat stack"><b class="small">${tr('启动模板会在你的账户里创建','The template creates in your account')}</b><div class="small muted">${tr('1 台服务器(t4g.small,悉尼) · 1 个固定 IP · 服务器专用权限角色 · 用来保存凭证的加密密钥条目 · 防火墙规则','1 server (t4g.small, Sydney) · 1 fixed IP · a server-only permission role · an encrypted secret for your credentials · firewall rules')}</div></div>
+  <button class="btn" id="ob-launch">${ic('server')}${tr('打开 AWS 启动模板(演示)','Open the AWS launch template (demo)')}</button>${obNav(tr('服务器已开始创建','Server is being created'),!S.onboardOk.launch)}</div>`;
+ if(i===3)return `<div class="stack"><h2>${tr('服务器上线中','Your server is coming online')}</h2><p class="muted">${tr('大约需要 5–10 分钟,你不需要做任何操作。','This takes about 5–10 minutes. You do not need to do anything.')}</p><ul class="prog">${[['在你的 AWS 账户中创建服务器','Create the server in your AWS account'],['分配固定 IP','Assign a fixed IP'],['服务器带令牌向平台报到','Server checks in with its token'],['为你的服务器创建专属网址','Create your server’s own address'],['服务器自行申请 HTTPS 证书','Server gets its own HTTPS certificate']].map((t,j)=>`<li id="pg-${j}"><span class="mk"></span>${pick(t)}</li>`).join('')}</ul>${obNav('',true)}</div>`;
+ if(i===4)return `<div class="stack"><h2>${tr('核对验证码','Match the code')}</h2><p class="muted">${tr('这一步防止有人把你引到假冒的设置页。两个地方显示的验证码必须完全一致。','This stops anyone from sending you to a fake setup page. The two codes must match exactly.')}</p>
+  <div class="grid cols-2"><div class="card flat stack"><span class="eyebrow">${tr('你的 AWS 控制台 · 启动模板输出','Your AWS console · template output')}</span><div class="codebox">K7Q · 2M9 · W4C</div><span class="small muted">${tr('在 AWS 控制台 → CloudFormation → 输出 中查看','AWS console → CloudFormation → Outputs')}</span></div>
+  <div class="card flat stack"><span class="eyebrow">${tr('设置页','Setup page')} · ${HOST}</span><div class="codebox">K7Q · 2M9 · W4C</div><span class="small muted">${tr('打开你收到的设置链接后显示','Shown when you open your setup link')}</span></div></div>
+  <div class="row" style="justify-content:space-between"><button class="btn" id="ob-back">${tr('上一步','Back')}</button><div class="row"><button class="btn" id="ob-mis">${tr('不一致','They differ')}</button><button class="btn primary" id="ob-next">${tr('一致,继续','They match')} ${ic('arrow')}</button></div></div></div>`;
+ if(i===5)return `<div class="stack"><h2>${tr('在你的服务器上录入凭证','Enter your credentials on your server')}</h2><div class="note warn">${ic('alert')}<span>${tr('下面这个页面由你自己的服务器提供。你输入的内容直接加密保存到你的 AWS 账户里,不会经过我们的网站。','This page is served by your own server. What you type is encrypted straight into your AWS account and never passes through our website.')}</span></div>
+  <div class="browser"><div class="bar">${ic('lock')}https://${HOST}/setup<span style="margin-left:auto" class="pill ok">${tr('你的服务器','Your server')}</span></div><form class="body" id="ob-cred">
+   <div class="field"><label for="cr-key">IG API Key</label><input class="input mono" id="cr-key" autocomplete="off" placeholder="${tr('在 IG 生成的 API Key','The API key you created at IG')}"></div>
+   <div class="grid cols-2" style="gap:12px"><div class="field"><label for="cr-user">${tr('IG 用户名','IG username')}</label><input class="input" id="cr-user" autocomplete="off"></div><div class="field"><label for="cr-pw">${tr('IG 密码','IG password')}</label><input class="input" id="cr-pw" type="password" autocomplete="off"></div></div>
+   <div class="field"><label>${tr('账户类型','Account type')}</label><span class="row"><span class="pill">${ic('lock')}${tr('演示账户(DEMO)','Demo (DEMO)')}</span><span class="small muted">${tr('首阶段固定为演示账户','Fixed to demo in the first stage')}</span></span></div>
+   <div class="field"><label for="cr-tok">${tr('一次性设置令牌','One-time setup token')}</label><input class="input mono" id="cr-tok" value="SET-55QW"></div>
+   <p class="small loss" id="cr-err" hidden></p><button class="btn primary" type="submit">${ic('lock')}${tr('加密保存','Encrypt and save')}</button></form></div>
+  <div class="row"><button class="btn" id="ob-back">${tr('上一步','Back')}</button></div></div>`;
+ if(i===6)return `<div class="stack"><h2>${tr('注册用于确认修改的 passkey','Register the passkey that approves changes')}</h2><p class="muted">${tr('注册在你的服务器上完成,公钥只保存在你的服务器里。以后服务器只执行带有这个 passkey 签名的修改。','You register it on your server and the public key is stored only there. From now on your server only runs changes signed with this passkey.')}</p>
+  <button class="btn primary" id="ob-pk">${ic('key')}${tr('注册 passkey','Register passkey')}</button><div class="row"><button class="btn" id="ob-back">${tr('上一步','Back')}</button></div></div>`;
+ return `<div class="stack"><h2>${tr('全部完成','All set')}</h2><div class="note ok">${ic('check')}<span>${tr('你的服务器已上线,设置页已经关闭。接下来可以配置策略,首个版本需要你签名确认。','Your server is online and the setup page is closed. Next, build your strategy. You will sign the first version.')}</span></div><div class="row"><a class="btn primary" href="#strategy">${tr('去配置策略','Build a strategy')} ${ic('arrow')}</a><a class="btn" href="#dash">${tr('回到总览','Back to overview')}</a><button class="btn ghost" id="ob-restart">${tr('重新演示开户','Replay onboarding')}</button></div></div>`;
+}
+function obGo(d){S.onboard=Math.max(0,Math.min(OB.length,S.onboard+d));render()}
+function obMount(i){
+  const b=$('#ob-back'),n=$('#ob-next');if(b)b.onclick=()=>obGo(-1);if(n)n.onclick=()=>obGo(1);
+  if(i===0)$$('.ob-ck').forEach((c,j)=>c.onchange=()=>{S.onboardOk['c'+j]=c.checked;$('#ob-next').disabled=!OB_CK.every((_,k)=>S.onboardOk['c'+k])});
+  if(i===1)$('#ob-ig').onchange=e=>{S.onboardOk.ig=e.target.checked;$('#ob-next').disabled=!e.target.checked};
+  if(i===2){$('#ob-copy').onclick=e=>copyText('REG-8K2F-QX7M-41DA',e.currentTarget);$('#ob-launch').onclick=()=>{S.onboardOk.launch=true;$('#ob-next').disabled=false;toast(tr('演示:已在 AWS 中开始创建服务器','Demo: AWS started creating your server'))}}
+  if(i===3){let k=0,t=0;const tick=()=>{if(k>0){const p=$('#pg-'+(k-1));if(!p)return;p.className='done';p.querySelector('.mk').innerHTML=ic('check')}
+      if(k<5){const p=$('#pg-'+k);if(!p)return;p.className='run';p.querySelector('.mk').innerHTML='<span class="spin"></span>';k++;t=setTimeout(tick,700)}else{const nx=$('#ob-next');if(nx)nx.disabled=false}};t=setTimeout(tick,200);cleanups.push(()=>clearTimeout(t))}
+  if(i===4)$('#ob-mis').onclick=()=>openSheet(`<h2 id="sheet-title">${tr('请停止,先不要输入任何信息','Stop. Do not enter anything yet')}</h2><p>${tr('验证码不一致,说明你打开的可能不是自己的服务器。关闭这个页面,直接从你的 AWS 控制台里打开设置链接,并联系我们核对。','If the codes differ, the page may not be your server. Close it, open the setup link from your AWS console instead, and contact us to check.')}</p><div class="row" style="justify-content:flex-end"><button class="btn primary" id="mm-ok">${tr('知道了','Got it')}</button></div>`,el=>{$('#mm-ok',el).onclick=closeSheet});
+  if(i===5)$('#ob-cred').onsubmit=e=>{e.preventDefault();const er=$('#cr-err');if(!$('#cr-key').value.trim()||!$('#cr-user').value.trim()||!$('#cr-pw').value){er.hidden=false;er.textContent=tr('请填写 API Key、用户名和密码。演示中可以输入任意内容。','Fill in the API key, username and password. Anything works in this demo.');return}
+    $('#cr-pw').value='';toast(tr('已加密保存到你的 AWS 账户','Encrypted and saved to your AWS account'));obGo(1)};
+  if(i===6)$('#ob-pk').onclick=()=>passkey({title:tr('在你的服务器上注册 passkey','Register a passkey on your server'),ok:tr('已注册','Registered'),onDone:()=>{toast(tr('设置页已关闭','Setup page closed'));obGo(1)}});
+  if(i===7)$('#ob-restart').onclick=()=>{S.onboard=0;S.onboardOk={};render()};
+}
+
+/* ---------- admin console ---------- */
+const CLIENTS=[
+ {id:'C-1001',src:['转介 · 王先生','Referral · Mr Wang'],stage:'run',ver:'1.3.2',chk:['12 秒前','12 s ago'],st:'ok',fee:'paid'},
+ {id:'C-1002',src:['小红书','Xiaohongshu (RED)'],stage:'run',ver:'1.3.2',chk:['25 秒前','25 s ago'],st:'ok',fee:'paid'},
+ {id:'C-1003',src:['转介 · 陈女士','Referral · Ms Chen'],stage:'run',ver:'1.3.1',chk:['8 秒前','8 s ago'],st:'ok',fee:'paid'},
+ {id:'C-1004',src:['Google 搜索','Google Search'],stage:'run',ver:'1.3.2',chk:['36 分钟前','36 min ago'],st:'bad',fee:'paid'},
+ {id:'C-1005',src:['抖音','Douyin'],stage:'run',ver:'1.3.2',chk:['19 秒前','19 s ago'],st:'ok',fee:'paid'},
+ {id:'C-1006',src:['Facebook','Facebook'],stage:'setup',ver:'—',chk:null,st:'',fee:'due'},
+ {id:'C-1007',src:['转介 · 李先生','Referral · Mr Li'],stage:'setup',ver:'—',chk:null,st:'',fee:'due'},
+ {id:'C-1008',src:['小红书','Xiaohongshu (RED)'],stage:'signed',ver:'—',chk:null,st:'',fee:'none'}];
+const STAGE={run:['运行中','Running'],setup:['实施中','Setting up'],signed:['已签约','Signed']},SRC={p:['转介','Referral'],m:['自媒体','Social media']},FEE={paid:['已收','Paid'],due:['待收','Due'],none:['—','—']};
+const BANNED=[['稳定盈利','暗示收益','implies returns'],['稳赚','暗示收益','implies returns'],['保证','承诺结果','promises an outcome'],['保本','承诺结果','promises an outcome'],['高胜率','未经验证的业绩','unverified performance'],['翻倍','暗示收益','implies returns'],['无风险','误导风险','misstates risk'],['躺赚','暗示收益','implies returns'],['年化','业绩陈述','performance claim'],['收益率','业绩陈述','performance claim'],['推荐买入','个人化建议','personal advice'],['跟着买','个人化建议','personal advice'],['必涨','误导性陈述','misleading'],
+ ['guaranteed','承诺结果','promises an outcome'],['risk-free','误导风险','misstates risk'],['steady profit','暗示收益','implies returns'],['high win rate','未经验证的业绩','unverified performance'],['double your','暗示收益','implies returns'],['passive income','暗示收益','implies returns'],['returns of','业绩陈述','performance claim']];
+VIEWS.ops={html:()=>{const run=CLIENTS.filter(c=>c.stage==='run').length;return topbar(tr('运营后台','Admin console'),tr('平台运营管理 · 只能看到客户服务器上报的摘要','Platform operations · we only see the summaries client servers report'))+
+ `<section class="grid cols-4">
+  <div class="card kpi"><span class="s">${tr('运行中的客户服务器','Client servers running')}</span><span class="v">${run}</span><span class="s">${tr('1 台超过 30 分钟未报到','1 has not checked in for 30+ min')}</span></div>
+  <div class="card kpi"><span class="s">${tr('实施中 / 已签约','Setting up / signed')}</span><span class="v">2 / 1</span><span class="s">${tr('本月计划完成 2 位','2 planned this month')}</span></div>
+  <div class="card kpi"><span class="s">${tr('安装费已收(演示)','Setup fees received (demo)')}</span><span class="v">A$7,500</span><span class="s">${tr('5 位 × A$1,500 · 2 位待收','5 × A$1,500 · 2 due')}</span></div>
+  <div class="card kpi"><span class="s">${tr('前台订阅(示例价)','Subscriptions (sample price)')}</span><span class="v">A$245<span class="small muted">${tr('/月','/mo')}</span></span><span class="s">${tr('订阅价未定,按 A$49/月示例','Price not set; A$49/mo as an example')}</span></div></section>
+ <div class="grid cols-2" style="margin-top:16px">
+  <section class="card"><div class="card-h"><h2>${tr('客户服务器','Client servers')}</h2><span class="small muted">${tr('数据来自服务器报到,运营方无登录权限','From server check-ins. We cannot sign in to them')}</span></div><div class="table-wrap"><table class="tbl"><thead><tr><th>${tr('客户','Client')}</th><th>${tr('阶段','Stage')}</th><th>${tr('运行时','Runtime')}</th><th>${tr('最近报到','Last check-in')}</th><th>${tr('来源','Source')}</th><th>${tr('安装费','Setup fee')}</th></tr></thead><tbody>
+   ${CLIENTS.map(c=>`<tr><td class="mono">${c.id}</td><td>${pick(STAGE[c.stage])}</td><td class="mono">${c.ver}</td><td>${c.chk?`<span class="pill ${c.st}">${c.st==='bad'?ic('alert'):'<span class="dot"></span>'}${pick(c.chk)}</span>`:'<span class="muted">—</span>'}</td><td class="small">${pick(c.src)}</td><td><span class="pill ${c.fee==='paid'?'ok':c.fee==='due'?'warn':''}">${pick(FEE[c.fee])}</span></td></tr>`).join('')}</tbody></table></div>
+   <div class="note warn" style="margin-top:12px">${ic('alert')}<span>${tr('C-1004 已 36 分钟未报到。运营方无法远程登录,需联系客户在其 AWS 控制台查看。','C-1004 has not checked in for 36 minutes. We cannot sign in remotely, so we ask the client to check their AWS console.')}</span></div></section>
+  <section class="stack" style="gap:16px">
+   <div class="card"><div class="card-h"><h2>${tr('客户进度','Client pipeline')}</h2></div><div class="funnel">${[[['咨询','Enquiry'],14],[['已签约','Signed'],8],[['实施中','Setting up'],7],[['运行中','Running'],5]].map(([l,v])=>`<div class="fr"><span>${pick(l)}</span><span class="fb"><i style="width:${v/14*100}%"></i></span><span class="mono">${v}</span></div>`).join('')}</div></div>
+   <div class="card"><div class="card-h"><h2>${tr('运行时版本分布','Runtime versions')}</h2><span class="small muted">${tr('客户自行选择何时更新','Clients choose when to update')}</span></div><div class="chart-box short"><canvas id="o-ver" aria-label="${tr('运行时版本分布','Runtime versions')}"></canvas></div></div>
+  </section></div>
+ <section class="card" style="margin-top:16px"><div class="card-h"><div class="stack" style="gap:2px"><span class="eyebrow">${tr('运营待办','Operations')}</span><h2>${tr('策略、合规、财务与渠道','Strategy, compliance, finance and referrals')}</h2></div></div>
+  <div class="grid cols-2">
+   <div class="stack"><h3>${tr('待办','To do')}</h3>
+    ${[[['策略模板说明','Strategy template notes'],['示例模板"多信号组合"v3 的参数说明待补充','Parameter notes for the "Multi-signal" v3 sample'],['2 项','2'],'warn'],[['文案与告知文本','Marketing and notices'],['推广文案 3 篇待审;客户风险告知文本 1 份待律师意见','3 marketing drafts to review; 1 risk notice awaiting legal input'],['4 项','4'],'warn'],[['财务对账','Reconciliation'],['安装费发票 7 张:5 已收,2 待收;订阅价待定','7 setup invoices: 5 paid, 2 due; subscription price not set'],['2 项','2'],'info'],[['渠道沟通','Referrals'],['3 位潜在客户待首次沟通','3 prospects waiting for a first call'],['3 项','3'],'info'],[['律师咨询','Legal advice'],['问题清单已整理,待预约','Question list ready, appointment not booked'],['待预约','To book'],'bad']].map(([a,b,c,d])=>`<div class="card flat row" style="justify-content:space-between"><div class="stack" style="gap:0;min-width:0"><b class="small">${pick(a)}</b><span class="small muted">${pick(b)}</span></div><span class="pill ${d}">${pick(c)}</span></div>`).join('')}</div>
+   <div class="stack"><h3>${tr('推广文案检查','Marketing copy check')}</h3><p class="small muted">${tr('发布前检查是否出现收益承诺、未经验证的业绩或个人化建议。','Check drafts for promised returns, unverified performance or personal advice before posting.')}</p>
+    <textarea class="input" id="cp-in" aria-label="${tr('待检查的文案','Copy to check')}">${tr('用规则代替情绪:在可视化界面里组合你的交易规则,机器人在你自己的服务器上执行。我们的策略高胜率、稳定盈利,跟着买就行。','Rules instead of emotions: build your trading rules visually and let the bot run them on your own server. Our strategy has a high win rate and steady profit, guaranteed.')}</textarea>
+    <div class="copyout" id="cp-out"></div><ul class="checks" id="cp-list"></ul></div></div></section>`},
+ mount(){const T=themeColors(),o=baseOpts(T,v=>v+tr(' 台',' servers'));o.indexAxis='y';o.scales.x.grid={color:T.line};o.scales.y.grid={display:false};o.scales.y.ticks={callback:function(v){return this.getLabelForValue(v)}};o.scales.x.ticks={stepSize:1};
+  mkChart($('#o-ver'),{type:'bar',data:{labels:['v1.3.2','v1.3.1','v1.3.0'],datasets:[{data:[4,1,0],backgroundColor:[T.accent,rgba(T.accent,.55),rgba(T.accent,.3)],borderRadius:5,maxBarThickness:28}]},options:o});
+  const inp=$('#cp-in'),run=()=>{const txt=inp.value,low=txt.toLowerCase();let h=esc(txt);const hits=[];
+    for(const[w,zh,en]of BANNED){const i=low.indexOf(w.toLowerCase());if(i>=0){hits.push([w,LANG==='en'?en:zh]);const re=new RegExp(esc(w).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');h=h.replace(re,m=>`<mark>${m}</mark>`)}}
+    $('#cp-out').innerHTML=h||`<span class="muted">${tr('在上面输入文案。','Type copy above.')}</span>`;
+    $('#cp-list').innerHTML=hits.length?hits.map(([w,why])=>`<li><span class="loss">${ic('x')}</span><span>"${esc(w)}": ${why}${tr(',不可使用。','. Do not use.')}</span></li>`).join(''):`<li><span class="gain">${ic('check')}</span><span>${tr('没有发现禁用表述。发布前仍需人工复核。','No blocked phrases found. Someone still reviews it before posting.')}</span></li>`};
+  inp.addEventListener('input',run);run()}};
+
+/* ============ boot ============ */
+document.documentElement.lang=LANG==='en'?'en':'zh-CN';
+window.addEventListener('hashchange',render);
+const mq=window.matchMedia('(prefers-color-scheme: dark)');if(mq.addEventListener)mq.addEventListener('change',()=>render());
+new MutationObserver(()=>render()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+render();
+</script>
+
+</body>
+</html>
